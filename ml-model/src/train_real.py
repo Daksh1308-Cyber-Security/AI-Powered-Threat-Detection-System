@@ -21,8 +21,11 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, OrdinalEncoder
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, confusion_matrix
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, confusion_matrix, roc_curve, precision_recall_curve
 from xgboost import XGBClassifier
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('train_real')
@@ -120,6 +123,68 @@ def prepare(df: pd.DataFrame, label_col: str, drop_cols: set, encoder=None):
 
 
 DAY_ORDER = {'monday': 0, 'tuesday': 1, 'wednesday': 2, 'thursday': 3, 'friday': 4}
+
+
+def _save_test_preds(y_test, y_prob) -> bytes:
+    import io
+    buf = io.BytesIO()
+    np.savez_compressed(buf, y_test=np.asarray(y_test, dtype=np.int64),
+                        y_prob=np.asarray(y_prob, dtype=np.float64))
+    return buf.getvalue()
+
+
+def _plot_roc(y_test, y_prob, path, dataset, split):
+    fpr, tpr, _ = roc_curve(y_test, y_prob)
+    fig, ax = plt.subplots(figsize=(6, 6))
+    ax.plot(fpr, tpr, lw=2, color='#0ea5e9')
+    ax.plot([0, 1], [0, 1], '--', color='#94a3b8')
+    ax.set_xlabel('False Positive Rate')
+    ax.set_ylabel('True Positive Rate')
+    ax.set_title(f'ROC Curve — {dataset.upper()}/{split} (AUC={roc_auc_score(y_test, y_prob):.3f})')
+    plt.tight_layout()
+    plt.savefig(path, dpi=150)
+    plt.close()
+
+
+def _plot_pr(y_test, y_prob, path, dataset, split):
+    prec, rec, _ = precision_recall_curve(y_test, y_prob)
+    fig, ax = plt.subplots(figsize=(6, 6))
+    ax.plot(rec, prec, lw=2, color='#0f766e')
+    ax.set_xlabel('Recall')
+    ax.set_ylabel('Precision')
+    ax.set_title(f'Precision-Recall — {dataset.upper()}/{split}')
+    plt.tight_layout()
+    plt.savefig(path, dpi=150)
+    plt.close()
+
+
+def _plot_confusion(y_test, y_pred, path, dataset, split):
+    cm = confusion_matrix(y_test, y_pred)
+    fig, ax = plt.subplots(figsize=(5, 4))
+    ax.imshow(cm, cmap='Blues')
+    for i in range(2):
+        for j in range(2):
+            ax.text(j, i, f'{cm[i, j]:,}', ha='center', va='center', color='black')
+    ax.set_xticks([0, 1])
+    ax.set_xticklabels(['Benign', 'Attack'])
+    ax.set_yticks([0, 1])
+    ax.set_yticklabels(['Benign', 'Attack'])
+    ax.set_title(f'Confusion Matrix — {dataset.upper()}/{split}')
+    plt.tight_layout()
+    plt.savefig(path, dpi=150)
+    plt.close()
+
+
+def _plot_importance(model, feature_names, path, top_n=20):
+    import pandas as pd
+    imp = pd.DataFrame({'feature': feature_names, 'importance': model.feature_importances_})
+    imp = imp.sort_values('importance', ascending=True).tail(top_n)
+    fig, ax = plt.subplots(figsize=(7, 8))
+    ax.barh(imp['feature'], imp['importance'], color='#0ea5e9')
+    ax.set_title(f'Top {min(top_n, len(imp))} Feature Importance')
+    plt.tight_layout()
+    plt.savefig(path, dpi=150)
+    plt.close()
 
 
 def main():
@@ -232,6 +297,11 @@ def main():
             pickle.dump(cat_encoder, f)
     (out / 'feature_columns.json').write_text(json.dumps(X_train_raw.columns.tolist()))
     (out / 'training_metrics.json').write_text(json.dumps(metrics, indent=2))
+    (out / 'test_predictions.npz').write_bytes(_save_test_preds(y_test, y_prob))
+    _plot_roc(y_test, y_prob, out / 'roc_curve.png', args.source, args.split)
+    _plot_pr(y_test, y_prob, out / 'precision_recall_curve.png', args.source, args.split)
+    _plot_confusion(y_test, y_pred, out / 'confusion_matrix.png', args.source, args.split)
+    _plot_importance(model, X_train_raw.columns, out / 'feature_importance.png')
     logger.info(f'Saved artifacts + metrics to {out}')
 
     # Self-check: reload artifacts and predict on held-out rows

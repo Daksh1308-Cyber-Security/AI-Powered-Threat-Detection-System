@@ -310,30 +310,33 @@ For detailed MITRE mapping, see [MITRE_MAPPING.md](MITRE_MAPPING.md).
 | Temporal | hour_of_day_sin, hour_of_day_cos, day_of_week, events_per_second |
 | MITRE | unique_mitre_techniques, high_severity_alert_count, technique_chain_length |
 
-**Model performance:**
+**Model performance (UNSW-NB15, official held-out test set — real training run):**
 
 | Metric | Value |
 |--------|-------|
-| Accuracy | 94.2% |
-| Precision | 96.1% |
-| Recall | 92.8% |
-| F1 Score | 94.4% |
-| AUC-ROC | 0.978 |
-| False Positive Rate | 3.9% |
+| Accuracy | 82.8% |
+| Precision | 69.6% |
+| Recall | 94.7% |
+| F1 Score | 80.2% |
+| AUC-ROC | 0.962 |
+| False Positive Rate | 30.4% |
 
-**Feature importance (top 10):**
+> Full methodology, CICIDS-2017 temporal results and honest caveats are in the
+> [Training section](#6-train-ml-model) (results tables) and `ml-model/models/<dataset>/training_metrics.json`.
+
+**Feature importance (top 10, real UNSW-NB15 model — see `ml-model/models/unsw_nb15/feature_importance.png`):**
 
 ```
-failed_logins_count      ████████████████ 0.18
-bytes_sent_ratio         ██████████████   0.15
-unique_dst_ips           ████████████     0.12
-admin_account_ratio      ██████████       0.10
-cmdline_length_mean      ████████         0.08
-events_per_second        ███████          0.07
-unique_mitre_techniques  ██████           0.06
-process_count            █████            0.05
-connection_duration      ████             0.04
-packet_size_mean         ███              0.03
+is_sm_ips_ports      ████████████████ 0.147
+swin                 ██████████████   0.139
+dload                ████████████     0.133
+dbytes               ███████████      0.125
+ackdat               ██████████       0.113
+state                ████             0.043
+tcprtt               ████             0.043
+dmean                ███              0.036
+service              ███              0.030
+dloss                ██               0.022
 ```
 
 ---
@@ -519,22 +522,23 @@ AI-Powered-Threat-Detection-System/
 
 ## Screenshots
 
-### Detection Coverage & Analytics (generated preview)
+### Detection Coverage & Analytics (generated from real data/models)
 
-> Generated from the simulated lab dataset (`lab/datasets/sample_logs.csv`) and the trained
-> model — runnable anytime via `python scripts/generate-screenshots.py`.
+> All ML and analytics visuals below are generated from **real benchmark datasets**
+> (CICIDS-2017, UNSW-NB15) and the **actual trained models** — no synthetic data.
+> Regenerate anytime via `python scripts/generate-screenshots.py`.
 
 ![MITRE ATT&CK Coverage Heatmap](docs/screenshots/mitre_attck_heatmap.png)
 *MITRE ATT&CK Coverage Heatmap — 51 Sigma rules across 13 tactics*
 
 ![Alert Volume Trend](docs/screenshots/alert_volume_trend.png)
-*Alert Volume Trend — simulated event flow split by benign vs. attack*
+*Labeled Flow Volume by Day — real CICIDS-2017 testbed flows, split by benign vs. attack*
 
 ![ML Model ROC Curve](docs/screenshots/roc_curve.png)
-*ML Model ROC Curve — XGBoost classifier (AUC 1.000 on synthetic data)*
+*ML Model ROC — XGBoost trained on UNSW-NB15, evaluated on the official held-out test set (AUC 0.96)*
 
 ![Attack Simulation Timeline](docs/screenshots/attack_simulation_timeline.png)
-*Attack Simulation Timeline — simulated attack events by type*
+*Attack classes per day — real CICIDS-2017 drive-by/bruteforce/DDoS traffic*
 
 ### Lab Screenshots (added after lab setup)
 

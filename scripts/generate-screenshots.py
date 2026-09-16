@@ -2,9 +2,8 @@
 """
 generate-screenshots.py
 AI-Powered Threat Detection System
-Generates portfolio screenshots that don't require the lab (detection coverage,
-alert volume, model ROC curve, attack simulation timeline) into docs/screenshots/.
-Kibana screenshots are captured manually after the lab is provisioned.
+Generates portfolio screenshots from REAL data and REAL trained models
+into docs/screenshots/. No synthetic data is used for ML visuals.
 """
 
 import sys
@@ -15,14 +14,15 @@ from collections import Counter
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / 'ml-model' / 'src'))
 OUT = ROOT / 'docs' / 'screenshots'
 OUT.mkdir(parents=True, exist_ok=True)
 
 SEVERITY_ORDER = ['critical', 'high', 'medium', 'low']
+CICIDS_DIR = ROOT / 'lab' / 'datasets' / 'kaggle' / 'cicids2017'
 
 
 def generate_mitre_heatmap():
@@ -67,24 +67,24 @@ def generate_mitre_heatmap():
 
 
 def generate_alert_volume_trend():
-    """Daily alert volume from the simulated lab dataset."""
-    df = pd.read_csv(ROOT / 'lab' / 'datasets' / 'sample_logs.csv')
-    df['@timestamp'] = pd.to_datetime(df['@timestamp'])
-    df['day'] = df['@timestamp'].dt.date
-    daily = df.groupby(['day', 'label']).size().unstack(fill_value=0)
-    daily = daily.reindex(columns=['benign', 'attack'], fill_value=0)
+    """Real per-day attack/benign flow volume from the CICIDS-2017 testbed."""
+    daily = []
+    for day in ['tuesday', 'wednesday', 'thursday', 'friday']:
+        df = pd.read_csv(CICIDS_DIR / f'{day}.csv', low_memory=False, usecols=['Label'])
+        lab = df['Label'].str.strip().str.lower()
+        daily.append({'day': day.title(), 'benign': int((lab == 'benign').sum()),
+                      'attack': int((lab != 'benign').sum())})
+    d = pd.DataFrame(daily)
 
     fig, ax = plt.subplots(figsize=(10, 5))
-    daily['benign'] = daily['benign'].astype(int)
-    daily['attack'] = daily['attack'].astype(int)
-    x = range(len(daily))
-    ax.bar(x, daily['benign'], label='Benign', color='#4caf50', alpha=0.85)
-    ax.bar(x, daily['attack'], bottom=daily['benign'], label='Attack', color='#e53935', alpha=0.9)
+    x = range(len(d))
+    ax.bar(x, d['benign'], label='Benign', color='#4caf50', alpha=0.85)
+    ax.bar(x, d['attack'], bottom=d['benign'], label='Attack', color='#e53935', alpha=0.9)
     ax.set_xticks(list(x))
-    ax.set_xticklabels([d.isoformat() if isinstance(d, (pd.Timestamp, object)) else str(d) for d in daily.index], rotation=30)
-    ax.set_title('Alert Volume Trend (Simulated Lab Dataset)')
-    ax.set_xlabel('Date')
-    ax.set_ylabel('Events')
+    ax.set_xticklabels(d['day'])
+    ax.set_title('Labeled Flow Volume by Day (CICIDS-2017)')
+    ax.set_xlabel('Capture Day')
+    ax.set_ylabel('Flows')
     ax.legend()
     ax.grid(axis='y', alpha=0.3)
     plt.tight_layout()
@@ -93,41 +93,52 @@ def generate_alert_volume_trend():
 
 
 def generate_roc_curve():
-    """ROC curve of the trained XGBoost model on the simulated dataset."""
-    from evaluate import ModelEvaluator
-    from train import ThreatDetectionTrainer
-
-    model_dir = ROOT / 'ml-model' / 'models'
-    df = pd.read_csv(ROOT / 'lab' / 'datasets' / 'sample_logs.csv')
-    trainer = ThreatDetectionTrainer(model_dir=str(model_dir))
-    X = trainer.extract_features(df)
-    y = trainer.label_encoder.transform(df['label'])
-    evaluator = ModelEvaluator(model_dir=str(model_dir))
-    metrics = evaluator.evaluate(X, y)
-    evaluator.plot_roc_curve(metrics['y_test'], metrics['y_prob'], str(OUT / 'roc_curve.png'))
-
+    """ROC curve of the REAL model trained on UNSW-NB15 (official split)."""
+    model_dir = ROOT / 'ml-model' / 'models' / 'unsw_nb15'
+    npz = np.load(model_dir / 'test_predictions.npz')
+    y_test, y_prob = npz['y_test'], npz['y_prob']
     with open(model_dir / 'training_metrics.json') as f:
-        training = __import__('json').load(f)
-    print(f"AUC-ROC (synthetic holdout): {metrics['auc_roc']:.3f} | trained AUC: {training.get('auc_roc', 'n/a')}")
+        import json
+        m = json.load(f)
+
+    from sklearn.metrics import roc_curve, roc_auc_score
+    fpr, tpr, _ = roc_curve(y_test, y_prob)
+    auc = roc_auc_score(y_test, y_prob)
+    fig, ax = plt.subplots(figsize=(6, 6))
+    ax.plot(fpr, tpr, lw=2, color='#0ea5e9', label=f'AUC = {auc:.3f}')
+    ax.plot([0, 1], [0, 1], '--', color='#94a3b8')
+    ax.set_xlabel('False Positive Rate')
+    ax.set_ylabel('True Positive Rate')
+    ax.set_title('ML Model ROC — UNSW-NB15 (official split)')
+    ax.legend(loc='lower right')
+    plt.tight_layout()
+    plt.savefig(OUT / 'roc_curve.png', dpi=150)
+    plt.close()
+    print(f"AUC-ROC (real, UNSW-NB15 official split): {auc:.3f}")
 
 
 def generate_attack_timeline():
-    """Attack event timeline from the simulated lab dataset."""
-    df = pd.read_csv(ROOT / 'lab' / 'datasets' / 'sample_logs.csv')
-    df['@timestamp'] = pd.to_datetime(df['@timestamp'])
-    attacks = df[df['label'] == 'attack'].copy()
-    attacks['type'] = attacks['attack_name'].fillna('unknown').astype(str)
+    """Real attack-class timeline from the CICIDS-2017 labeled flows."""
+    recs = []
+    for day in ['tuesday', 'wednesday', 'thursday', 'friday']:
+        df = pd.read_csv(CICIDS_DIR / f'{day}.csv', low_memory=False, usecols=['Label'])
+        lab = df['Label'].str.strip().str.lower()
+        for cls, n in lab[lab != 'benign'].value_counts().items():
+            recs.append({'day': day.title(), 'cls': cls, 'n': int(n)})
+    d = pd.DataFrame(recs)
 
-    order = sorted(attacks['type'].unique())
-    y = [order.index(t) for t in attacks['type']]
-    fig, ax = plt.subplots(figsize=(11, 5))
-    colors = plt.cm.tab20([order.index(t) / max(1, len(order)) for t in attacks['type']])
-    ax.scatter(attacks['@timestamp'], y, c=colors, s=18, alpha=0.8)
-    ax.set_yticks(range(len(order)))
-    ax.set_yticklabels(order, fontsize=8)
-    ax.set_title('Attack Simulation Timeline')
-    ax.set_xlabel('Timestamp')
-    ax.set_ylabel('Attack Type')
+    classes = sorted(d['cls'].unique())
+    ymap = {c: i for i, c in enumerate(classes)}
+    fig, ax = plt.subplots(figsize=(11, 6))
+    for day in d['day'].unique():
+        sub = d[d['day'] == day]
+        ax.scatter([day] * len(sub), [ymap[c] for c in sub['cls']],
+                   s=sub['n'] / sub['n'].max() * 300 + 20, alpha=0.7, edgecolor='black', linewidth=0.4)
+    ax.set_yticks(range(len(classes)))
+    ax.set_yticklabels(classes, fontsize=8)
+    ax.set_title('Attack Classes Present per Day (CICIDS-2017, real testbed traffic)')
+    ax.set_xlabel('Capture Day')
+    ax.set_ylabel('Attack Class')
     ax.grid(axis='y', alpha=0.3)
     plt.tight_layout()
     plt.savefig(OUT / 'attack_simulation_timeline.png', dpi=150)

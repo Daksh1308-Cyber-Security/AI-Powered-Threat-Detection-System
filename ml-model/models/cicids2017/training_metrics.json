@@ -19,11 +19,5 @@
       198305
     ]
   ],
-  "scale_pos_weight": 2.350581377127276,
-  "per_class_friday_sample": {
-    "portscan_recall@0.5": 0.993,
-    "ddos_recall@0.5": 0.999,
-    "botnet_recall@0.5": 0.0,
-    "benign_fpr@0.5": 0.0002
-  }
+  "scale_pos_weight": 2.350581377127276
 }

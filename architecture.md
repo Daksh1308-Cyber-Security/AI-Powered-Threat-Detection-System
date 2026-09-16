@@ -85,9 +85,10 @@ This document details the technical architecture of the AI-Powered Threat Detect
 │  │   SIGMA RULES   │  │   YARA RULES    │  │   ML MODEL      │           │
 │  │   (51 rules)    │  │   (20 rules)    │  │   (XGBoost)     │           │
 │  │                 │  │                 │  │                 │           │
-│  │ • Vendor-       │  │ • Malware       │  │ • 23 features   │           │
+│  │ • Vendor-       │  │ • Malware       │  │ • 34 features   │           │
 │  │   agnostic      │  │   classification│  │ • Binary class  │           │
-│  │ • MITRE mapped  │  │ • File-based    │  │ • 94% accuracy  │           │
+│  │ • MITRE mapped  │  │ • File-based    │  │ • F1 0.80 (real │           │
+│  │ • Log-based     │  │   detection     │  │   UNSW-NB15)    │           │
 │  │ • Log-based     │  │   detection     │  │ • Real-time     │           │
 │  │ • Configurable  │  │ • Pattern match │  │ • Anomaly score │           │
 │  └────────┬────────┘  └────────┬────────┘  └────────┬────────┘           │
@@ -593,12 +594,16 @@ Single analyst         → SOC team
 
 | Metric | Value | Target |
 |--------|-------|--------|
-| True Positive Rate | 95% | >90% |
-| False Positive Rate | 15% | <20% |
-| Precision | 96% | >90% |
-| Recall | 92% | >85% |
-| F1 Score | 94% | >85% |
-| AUC-ROC | 0.978 | >0.95 |
+| True Positive Rate (recall) | 94.7% | >90% |
+| False Positive Rate | 30.4% | <20% |
+| Precision | 69.6% | >90% |
+| Recall | 94.7% | >85% |
+| F1 Score | 80.2% | >85% |
+| AUC-ROC | 0.962 | >0.95 |
+
+> Real i.e. from the UNSW-NB15 official held-out test set run. The precision/FPR trade-off is
+> an honest, expected cost of catching 94.7% of attacks; CICIDS-2017 temporal results are higher
+> (F1 0.996) but on an easy-signature day.
 
 ### Operational Performance
 
