@@ -1,0 +1,22 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install dependencies
+        run: pip install xgboost==3.4.1 scikit-learn==1.9.0 pandas==2.3.3 numpy==2.4.6 pyyaml pytest yara-python
+      - name: Validate detection rules (Sigma schema)
+        run: python scripts/validate-rules.py --schema sigma
+      - name: Run test suite
+        run: python -m pytest tests/ -q

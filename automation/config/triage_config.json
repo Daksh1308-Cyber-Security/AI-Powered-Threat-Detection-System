@@ -1,0 +1,49 @@
+{
+  "ml_score_weight": 0.4,
+  "sigma_score_weight": 0.3,
+  "yara_score_weight": 0.2,
+  "mitre_score_weight": 0.1,
+  "severity_thresholds": {
+    "critical": 80,
+    "high": 60,
+    "medium": 40,
+    "low": 20,
+    "info": 0
+  },
+  "false_positive_threshold": 0.3,
+  "auto_ir_threshold": 80,
+  "false_positive_patterns": [
+    {
+      "name": "Internal Scanner",
+      "type": "ip_whitelist",
+      "values": ["192.168.1.100", "10.0.0.50"],
+      "severity_adjustment": -30
+    },
+    {
+      "name": "Backup Job",
+      "type": "process_whitelist",
+      "values": ["backup.exe", "rsync", "tar"],
+      "severity_adjustment": -20
+    },
+    {
+      "name": "IT Admin",
+      "type": "user_whitelist",
+      "values": ["admin", "it_support", "helpdesk"],
+      "severity_adjustment": -15
+    }
+  ],
+  "enrichment_sources": {
+    "ip_reputation": {
+      "enabled": true,
+      "api_url": "https://api.example.com/ip-reputation"
+    },
+    "asset_criticality": {
+      "enabled": true,
+      "critical_assets": ["domain_controller", "database", "file_server"]
+    },
+    "user_role": {
+      "enabled": true,
+      "admin_roles": ["domain_admin", "local_admin"]
+    }
+  }
+}

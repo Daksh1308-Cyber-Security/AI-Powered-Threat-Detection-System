@@ -1,0 +1,47 @@
+{
+  "name": "Data Exfiltration Response",
+  "description": "Automated response when data exfiltration is detected (MITRE T1048)",
+  "severity": "high",
+  "mitre_tactic": "exfiltration",
+  "mitre_technique": "T1048 - Exfiltration Over Alternative Protocol",
+  "estimated_duration": "15-30 minutes",
+  "required_roles": ["incident_responder", "security_analyst"],
+  "actions": [
+    {
+      "action_id": "block_ip",
+      "name": "Block External IP",
+      "description": "Block the suspicious external IP address",
+      "command": "New-NetFirewallRule -DisplayName 'Block Suspicious IP' -Direction Outbound -RemoteAddress {source_ip} -Action Block",
+      "requires_approval": true,
+      "timeout_seconds": 60,
+      "rollback_command": "Remove-NetFirewallRule -DisplayName 'Block Suspicious IP'"
+    },
+    {
+      "action_id": "capture_traffic",
+      "name": "Capture Network Traffic",
+      "description": "Start capturing network traffic for analysis",
+      "command": "netsh trace start capture=yes tracefile=C:\\forensics\\network_capture.etl",
+      "requires_approval": false,
+      "timeout_seconds": 300,
+      "rollback_command": "netsh trace stop"
+    },
+    {
+      "action_id": "check_dns",
+      "name": "Check DNS Queries",
+      "description": "Review recent DNS queries for exfiltration",
+      "command": "Get-DnsClientCache | Export-Csv -Path 'C:\\forensics\\dns_cache.csv'",
+      "requires_approval": false,
+      "timeout_seconds": 120,
+      "rollback_command": null
+    },
+    {
+      "action_id": "audit_access",
+      "name": "Audit File Access",
+      "description": "Audit file access events for sensitive data",
+      "command": "Get-WinEvent -LogName 'Microsoft-Windows-Sysmon/Operational' -FilterXPath '*[EventData[Data[@Name=''TargetFilename'']]]' -MaxEvents 500 | Where-Object { $_.Message -match 'document|database|backup' } | Export-Csv -Path 'C:\\forensics\\file_access.csv'",
+      "requires_approval": false,
+      "timeout_seconds": 300,
+      "rollback_command": null
+    }
+  ]
+}

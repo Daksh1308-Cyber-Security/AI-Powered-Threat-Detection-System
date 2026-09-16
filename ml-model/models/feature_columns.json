@@ -1,0 +1,1 @@
+["src_port_entropy", "dest_port_entropy", "bytes_sent_ratio", "packet_size_mean", "auth_failure", "auth_success", "process_count", "cmdline_length", "has_suspicious_cmd", "hour_of_day", "day_of_week", "hour_sin", "hour_cos", "event_cat_authentication", "event_cat_file", "event_cat_network", "event_cat_process", "event_cat_web", "agent_linux", "agent_windows"]

@@ -1,0 +1,56 @@
+{
+  "name": "Ransomware Response",
+  "description": "Automated response when ransomware is detected (MITRE T1486)",
+  "severity": "critical",
+  "mitre_tactic": "impact",
+  "mitre_technique": "T1486 - Data Encrypted for Impact",
+  "estimated_duration": "30-60 minutes",
+  "required_roles": ["incident_responder", "security_analyst"],
+  "actions": [
+    {
+      "action_id": "isolate_host",
+      "name": "Isolate Host",
+      "description": "Isolate the affected host from the network",
+      "command": "netsh advfirewall set allprofiles state off; New-NetFirewallRule -DisplayName 'Block All' -Direction Inbound -Action Block",
+      "requires_approval": true,
+      "timeout_seconds": 300,
+      "rollback_command": "netsh advfirewall set allprofiles state on"
+    },
+    {
+      "action_id": "disable_user",
+      "name": "Disable User Account",
+      "description": "Disable the compromised user account",
+      "command": "Disable-ADAccount -Identity {user_name}",
+      "requires_approval": true,
+      "timeout_seconds": 60,
+      "rollback_command": "Enable-ADAccount -Identity {user_name}"
+    },
+    {
+      "action_id": "collect_evidence",
+      "name": "Collect Evidence",
+      "description": "Collect forensic evidence from the host",
+      "command": "Get-Process | Export-Csv -Path 'C:\\forensics\\processes.csv'; Get-NetTCPConnection | Export-Csv -Path 'C:\\forensics\\network.csv'",
+      "requires_approval": false,
+      "timeout_seconds": 300,
+      "rollback_command": null
+    },
+    {
+      "action_id": "scan_system",
+      "name": "System Scan",
+      "description": "Run full system scan for malware",
+      "command": "Start-MpScan -ScanType FullScan",
+      "requires_approval": false,
+      "timeout_seconds": 3600,
+      "rollback_command": null
+    },
+    {
+      "action_id": "check_backups",
+      "name": "Verify Backups",
+      "description": "Verify backup integrity and availability",
+      "command": "Get-ChildItem -Path 'E:\\backups' -Filter '*.bak' | Sort-Object LastWriteTime -Descending | Select-Object -First 5",
+      "requires_approval": false,
+      "timeout_seconds": 120,
+      "rollback_command": null
+    }
+  ]
+}
