@@ -1,0 +1,56 @@
+title: Access Token Manipulation Detection
+id: sigma-005-003
+status: experimental
+description: Detects manipulation of access tokens for privilege escalation
+references:
+  - https://attack.mitre.org/techniques/T1134/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.privilege_escalation
+  - attack.t1134
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_whoami:
+    Image|endswith: '\whoami.exe'
+    CommandLine|contains:
+      - '/priv'
+      - '/groups'
+      - 'all'
+  selection_ps:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+    CommandLine|contains:
+      - 'Get-Process'
+      - 'OpenProcess'
+      - 'DuplicateToken'
+      - 'ImpersonateNamedPipeClient'
+      - 'CreateProcessWithTokenW'
+      - 'CreateProcessAsUserW'
+      - 'OpenThreadToken'
+      - 'SetThreadToken'
+      - 'AdjustTokenPrivileges'
+      - 'OpenProcessToken'
+      - 'LookupPrivilegeValue'
+      - 'GetTokenInformation'
+      - 'SetTokenInformation'
+      - 'DuplicateTokenEx'
+      - 'ImpersonateLoggedOnUser'
+  selection_access_token:
+    Image|endswith:
+      - '\notepad.exe'
+      - '\mspaint.exe'
+    ParentImage|endswith:
+      - '\explorer.exe'
+    User: SYSTEM
+    ParentUser: USER
+  condition: selection_whoami or selection_ps or selection_access_token
+falsepositives:
+  - Legitimate token inspection
+  - System administration
+  - Security tools
+level: high

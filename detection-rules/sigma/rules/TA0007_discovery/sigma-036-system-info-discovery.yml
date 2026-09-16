@@ -1,0 +1,98 @@
+title: System Information Discovery Detection
+id: sigma-008-004
+status: experimental
+description: Detects gathering of system information
+references:
+  - https://attack.mitre.org/techniques/T1082/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.discovery
+  - attack.t1082
+logsource:
+  category: process_creation
+  product: any
+detection:
+  selection_linux:
+    Image|endswith:
+      - '/uname'
+      - '/hostname'
+      - '/dmidecode'
+      - '/lscpu'
+      - '/lsusb'
+      - '/lspci'
+      - '/lsmod'
+      - '/lshw'
+      - '/lsof'
+      - '/df'
+      - '/fdisk'
+      - '/mount'
+      - '/free'
+      - '/cat'
+      - '/iwconfig'
+    CommandLine|contains:
+      - '-a'
+      - '-s'
+      - '-r'
+      - 'cpu'
+      - '/proc/env'
+      - 'ven'
+      - '/system'
+      - '/info'
+  selection_windows:
+    Image|endswith:
+      - '\systeminfo.exe'
+      - '\whoami.exe'
+      - '\hostname.exe'
+      - '\ver.exe'
+      - '\msinfo32.exe'
+      - '\reg.exe'
+      - '\query.exe'
+      - '\netsh.exe'
+      - '\tasklist.exe'
+      - '\sc.exe'
+      - '\driverquery.exe'
+    CommandLine|contains:
+      - 'query qc'
+      - 'query rd'
+      - 'query user'
+      - 'systeminfo'
+      - 'SV'
+      - '/fo'
+      - '/v'
+      - 'all'
+  selection_windows_powershell:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+    CommandLine|contains:
+      - 'Get-ComputerInfo'
+      - 'Get-WmiObject Win32_OperatingSystem'
+      - 'Get-CimInstance Win32_'
+      - 'Get-Process'
+      - 'System.Net.NetworkInformation'
+      - 'Get-NetIPConfiguration'
+      - 'Get-NetNeighbor'
+      - 'Get-DnsClientServerAddress'
+      - 'Get-TimeZone'
+      - 'Get-ComputerRestorePoint'
+      - 'Get-ItemProperty HKLM:\'
+  selection_linux_files:
+    Image|endswith:
+      - '/bin/cat'
+      - '/usr/bin/cat'
+    CommandLine|contains:
+      - '/etc/os-release'
+      - '/etc/issue'
+      - '/etc/motd'
+      - '/proc/version'
+      - '/proc/meminfo'
+      - '/proc/cpuinfo'
+      - '/proc/uptime'
+  condition: selection_linux or selection_windows or selection_windows_powershell or selection_linux_files
+falsepositives:
+  - Legitimate system monitoring
+  - IT support
+  - Software installation
+level: low

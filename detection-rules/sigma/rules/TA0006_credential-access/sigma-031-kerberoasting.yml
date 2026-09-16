@@ -1,0 +1,50 @@
+title: Kerberoasting Detection
+id: sigma-007-003
+status: experimental
+description: Detects Kerberoasting attacks targeting service accounts
+references:
+  - https://attack.mitre.org/techniques/T1558/003/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.credential_access
+  - attack.t1558.003
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_impacket:
+    Image|endswith:
+      - '/python'
+      - '/python3'
+      - 'python.exe'
+    CommandLine|contains:
+      - 'GetUserSPNs'
+      - 'GetNPUsers'
+      - 'kerberoast'
+      - 'tgsrepcrack'
+      - 'tgs'
+      - 'kerberoasting'
+  selection_powershell:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+    CommandLine|contains:
+      - 'RequestUserTicket'
+      - 'RequestTGS'
+      - 'Kerberos'
+      - 'GetTGSRequest'
+      - 'ServerPrincipalName'
+      - 'SPN'
+      - 'Get-Credential -UserPrincipalName'
+  selection_event_log:
+    EventID: 4769
+    winlog.event_data.ServiceName|endswith: '$'
+    winlog.event_data.TicketOptions: '0x40810000'
+  condition: selection_impacket or selection_powershell or selection_event_log
+falsepositives:
+  - Legitimate service ticket requests
+  - Application authentication
+  - Scheduled tasks using service accounts
+level: high

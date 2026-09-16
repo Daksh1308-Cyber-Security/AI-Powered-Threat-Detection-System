@@ -1,0 +1,59 @@
+title: Abuse of Elevation Control Mechanism Detection
+id: sigma-005-001
+status: experimental
+description: Detects abuse of elevated privileges or privilege escalation mechanisms
+references:
+  - https://attack.mitre.org/techniques/T1548/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.privilege_escalation
+  - attack.t1548
+logsource:
+  category: process_creation
+  product: any
+detection:
+  selection_sudo:
+    Image|endswith:
+      - '/sudo'
+      - '/pkexec'
+      - '/polkit-agent-helper-1'
+    CommandLine|endswith: '-r'
+  selection_polkit:
+    Image|endswith:
+      - '/pkexec'
+      - '/polkit-agent-helper-1'
+  selection_setuid:
+    Image|endswith:
+      - '/chmod'
+    CommandLine|contains:
+      - 'u+s'
+      - '4777'
+      - '4755'
+      - '4754'
+      - '6755'
+  selection_windows_uac:
+    Image|endswith:
+      - '\cmd.exe'
+      - '\powershell.exe'
+      - '\pwsh.exe'
+    CommandLine|contains:
+      - '/tokens'
+      - '/elevate'
+      - 'runas'
+      - 'klist'
+      - 'getsystem'
+      - 'bypassuac'
+  selection_windows_services:
+    Image|endswith:
+      - '\services.exe'
+    ParentImage|endswith:
+      - '\cmd.exe'
+      - '\powershell.exe'
+  condition: selection_sudo or selection_polkit or selection_setuid or selection_windows_uac or selection_windows_services
+falsepositives:
+  - Legitimate sudo usage
+  - System administration
+  - Software installation
+level: critical

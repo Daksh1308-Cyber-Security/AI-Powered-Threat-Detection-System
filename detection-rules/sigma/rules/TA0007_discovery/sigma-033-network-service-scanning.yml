@@ -1,0 +1,58 @@
+title: Network Service Scanning Detection
+id: sigma-008-001
+status: experimental
+description: Detects network service scanning activities
+references:
+  - https://attack.mitre.org/techniques/T1046/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.discovery
+  - attack.t1046
+logsource:
+  category: firewall
+  product: any
+detection:
+  selection_nmap:
+    Image|endswith:
+      - '/nmap'
+      - '/masscan'
+      - 'nmap.exe'
+      - 'masscan.exe'
+  selection_multiple_ports:
+    source.ip: '*'
+    destination.port:
+      - 21
+      - 22
+      - 23
+      - 25
+      - 53
+      - 80
+      - 110
+      - 135
+      - 139
+      - 443
+      - 445
+      - 1433
+      - 1521
+      - 3306
+      - 3389
+      - 5432
+      - 5900
+      - 8080
+      - 8443
+  selection_scan_tools:
+    Image|endswith:
+      - '/nc'
+      - '/hping3'
+      - '/nikto'
+      - '/zmap'
+      - '/unicornscan'
+      - '/dmitry'
+  condition: selection_nmap or selection_multiple_ports or selection_scan_tools | count(destination.port) by source.ip > 10 within 5m
+falsepositives:
+  - Vulnerability scanners
+  - Network monitoring tools
+  - Legitimate security assessments
+level: medium

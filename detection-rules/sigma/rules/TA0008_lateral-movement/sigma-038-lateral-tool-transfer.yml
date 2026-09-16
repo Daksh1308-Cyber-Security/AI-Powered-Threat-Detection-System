@@ -1,0 +1,70 @@
+title: Lateral Tool Transfer Detection
+id: sigma-009-002
+status: experimental
+description: Detects transfer of tools between hosts during lateral movement
+references:
+  - https://attack.mitre.org/techniques/T1570/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.lateral_movement
+  - attack.t1570
+logsource:
+  category: network_connection
+  product: any
+detection:
+  selection_executable_smb:
+    destination.port: 445
+    Image|endswith:
+      - '.exe'
+      - '.bat'
+      - '.cmd'
+      - '.ps1'
+      - '.dll'
+      - '.vbs'
+      - '.js'
+      - '.msi'
+  selection_suspicious_files:
+    Image|endswith:
+      - '\procdump.exe'
+      - '\psexec.exe'
+      - '\mimikatz.exe'
+      - '\snaff.exe'
+      - '\xordump.exe'
+      - '\pentest.exe'
+      - '\pwn.exe'
+      - '\dump.exe'
+  selection_transfer_tools:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+      - '\cmd.exe'
+      - '\xcopy.exe'
+      - '\copy.exe'
+      - '\robocopy.exe'
+      - '\scp.exe'
+    CommandLine|contains:
+      - 'Copy-Item'
+      - 'BITSAdmin'
+      - 'Start-BitsTransfer'
+      - 'net use'
+      - 'xcopy'
+      - 'scp'
+      - 'rsync'
+  selection_wireless:
+    destination.port:
+      - 137
+      - 138
+      - 139
+      - 445
+    process.name|endswith:
+      - 'net.exe'
+      - 'net1.exe'
+      - 'mvnproc.exe'
+  condition: selection_executable_smb or selection_suspicious_files or selection_transfer_tools or selection_wireless
+falsepositives:
+  - Legitimate file sharing
+  - Software deployment
+  - Patch management
+level: high

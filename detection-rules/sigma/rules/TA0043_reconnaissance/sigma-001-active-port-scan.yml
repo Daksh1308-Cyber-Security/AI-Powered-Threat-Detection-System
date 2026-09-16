@@ -1,0 +1,32 @@
+title: Active Port Scanning Detection
+id: sigma-001-001
+status: experimental
+description: Detects multiple connection attempts to different ports on the same host within a short time window, indicating port scanning activity
+references:
+  - https://attack.mitre.org/techniques/T1595/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.reconnaissance
+  - attack.t1595
+logsource:
+  category: firewall
+  product: any
+detection:
+  selection:
+    event.category: network
+    event.kind: event
+    event.type: connection
+  filter_benign:
+    destination.port:
+      - 80
+      - 443
+      - 53
+      - 22
+  condition: selection and not filter_benign | count(destination.port) by source.ip > 20 within 5m
+falsepositives:
+  - Vulnerability scanners
+  - Network monitoring tools
+  - Legitimate security assessments
+level: high

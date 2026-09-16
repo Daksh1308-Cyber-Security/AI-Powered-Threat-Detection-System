@@ -1,0 +1,70 @@
+title: Remote Services Lateral Movement Detection
+id: sigma-009-001
+status: experimental
+description: Detects lateral movement via remote services
+references:
+  - https://attack.mitre.org/techniques/T1021/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.lateral_movement
+  - attack.t1021
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_windows_rm:
+    Image|endswith:
+      - '\psexec.exe'
+      - '\wmiexec.exe'
+      - '\wmicex.exe'
+      - '\smbexec.py'
+      - 'psexec64.exe'
+    CommandLine|contains:
+      - '-s'
+      - '-d'
+      - '-accepteula'
+      - 'cmd'
+      - 'powershell'
+      - 'cmd.exe'
+      - 'powershell.exe'
+  selection_winrm:
+    Image|endswith:
+      - '\winrs.exe'
+    CommandLine|contains:
+      - '-r:'
+      - '-u:'
+      - '-p:'
+  selection_powershell_rm:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+    CommandLine|contains:
+      - 'Invoke-WmiMethod'
+      - 'Invoke-CimMethod'
+      - 'invoke-command'
+      - '-computer'
+      - '-ComputerName'
+      - 'New-CimSession'
+      - 'New-PSSession'
+      - 'Enter-PSSession'
+  selection_smb:
+    Image|endswith:
+      - '\net.exe'
+      - '\net1.exe'
+    CommandLine|contains:
+      - 'use'
+      - 'disk'
+  selection_rdp:
+    Image|endswith:
+      - '\mstsc.exe'
+    CommandLine|contains:
+      - '/admin'
+      - '/v:'
+  condition: selection_windows_rm or selection_winrm or selection_powershell_rm or selection_smb or selection_rdp
+falsepositives:
+  - Legitimate remote administration
+  - IT support
+  - Automated management tools
+level: high

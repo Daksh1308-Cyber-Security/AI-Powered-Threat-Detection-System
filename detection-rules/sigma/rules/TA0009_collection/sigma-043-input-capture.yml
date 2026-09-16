@@ -1,0 +1,90 @@
+title: Input Capture Detection
+id: sigma-010-003
+status: experimental
+description: Detects keylogging and input capture activities
+references:
+  - https://attack.mitre.org/techniques/T1056/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.collection
+  - attack.t1056
+logsource:
+  category: process_creation
+  product: any
+detection:
+  selection_windows_hook:
+    Image|endswith:
+      - '\hooked.dll'
+      - '\winsta.dll'
+      - '\win32k.sys'
+      - '\ntoskrnl.exe'
+      - '\keylog.exe'
+      - '\keylogger.exe'
+      - '\capture.exe'
+      - '\hook.exe'
+    CommandLine|contains:
+      - 'SetWindowsHookEx'
+      - 'GetAsyncKeyState'
+      - 'GetKeyState'
+      - 'GetKeyboardState'
+      - 'keybd_event'
+      - 'GetMessage'
+      - 'PeekMessage'
+      - 'WH_KEYBOARD'
+      - 'WH_KEYBOARD_LL'
+      - 'WH_MOUSE'
+      - 'WH_MOUSE_LL'
+      - 'WH_CALLWNDPROC'
+  selection_powershell_hook:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+    CommandLine|contains:
+      - 'GetForegroundWindow'
+      - 'GetWindowText'
+      - 'GetAsyncKeyState'
+      - 'System.Windows.Forms.Keys'
+      - 'System.Windows.Input.Keyboard'
+      - 'Add-Type @'
+      - 'user32.dll'
+      - 'kernel32.dll'
+  selection_linux:
+    Image|endswith:
+      - '/logkeys'
+      - '/lkl'
+      - '/keylogger'
+      - '/logkey'
+      - '/evtest'
+      - '/xinput'
+      - '/showkey'
+    CommandLine|contains:
+      - '-d'
+      - '-s'
+      - '-o'
+      - 'events'
+  selection_linux_dump:
+    Image|endswith:
+      - '/screen'
+      - '/xwd'
+      - '/import'
+      - '/xwininfo'
+    CommandLine|contains:
+      - 'dump'
+      - '-window'
+      - 'root'
+      - '/dev/input/'
+  selection_capture:
+    Image|endswith:
+      - '\gethook.dll'
+      - '\notepad.exe'
+      - '\mspaint.exe'
+    ParentImage|endswith:
+      - 'explorer.exe'
+  condition: selection_windows_hook or selection_powershell_hook or selection_linux or selection_linux_dump or selection_capture
+falsepositives:
+  - Legitimate accessibility tools
+  - Screen readers
+  - Password managers
+level: critical

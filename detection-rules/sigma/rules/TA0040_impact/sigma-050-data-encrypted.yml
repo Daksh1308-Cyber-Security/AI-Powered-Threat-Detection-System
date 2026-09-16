@@ -1,0 +1,76 @@
+title: Data Encrypted for Impact Detection
+id: sigma-013-001
+status: experimental
+description: Detects data encryption indicating ransomware attack
+references:
+  - https://attack.mitre.org/techniques/T1486/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.impact
+  - attack.t1486
+logsource:
+  category: process_creation
+  product: any
+detection:
+  selection_encrypt_tools:
+    Image|endswith:
+      - '\winrar.exe'
+      - '\7z.exe'
+      - '\rar.exe'
+      - '/encrypt'
+      - '/upx'
+      - '/gpg'
+      - '/openssl'
+      - '/crypt'
+    CommandLine|contains:
+      - 'a'
+      - 'x'
+      - '-enc'
+      - '-aes'
+      - '-password'
+      - 'enc'
+      - 'crypto'
+  selection_ransomware:
+    Image|endswith:
+      - '.exe'
+    CommandLine|contains:
+      - 'encrypt'
+      - 'decrypt'
+      - 'ransom'
+      - 'bitcoin'
+      - 'pay'
+      - '_enc'
+      - '-enc'
+  selection_extension:
+    Target|endswith:
+      - '.locked'
+      - '.encrypted'
+      - '.crypto'
+      - '.wncry'
+      - '.ryuk'
+      - '.locky'
+      - '.crypt'
+      - '.ddd'
+      - '.good'
+      - '.kevin'
+      - '_enc'
+  selection_highaccess:
+    winlog.event_id: 21
+    winlog.event_data.Image|endswith: '.exe'
+    winlog.event_data.TargetFilename|contains:
+      - 'C:\Users\'
+      - 'C:\Documents\'
+  selection_vssadmin:
+    Image|endswith:
+      - '\vssadmin.exe'
+    CommandLine|contains:
+      - 'delete'
+      - 'shadows'
+  condition: selection_encrypt_tools or selection_ransomware or selection_extension or selection_highaccess or selection_vssadmin
+falsepositives:
+  - Legitimate file encryption (BitLocker, EFS)
+  - Software installation
+  - System maintenance
+level: critical

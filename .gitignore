@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+
+# Secrets
+.env
+
+# Lab artifacts (VM disks, captures)
+VMs/
+*.vdi
+*.vbox
+*.pcap
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

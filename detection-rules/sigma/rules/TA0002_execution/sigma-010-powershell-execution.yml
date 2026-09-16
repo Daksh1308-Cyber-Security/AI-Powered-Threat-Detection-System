@@ -1,0 +1,84 @@
+title: Suspicious PowerShell Execution Detection
+id: sigma-003-002
+status: experimental
+description: Detects suspicious PowerShell execution patterns that may indicate malicious activity
+references:
+  - https://attack.mitre.org/techniques/T1059/001/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.execution
+  - attack.t1059.001
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_encoded:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+    CommandLine|contains:
+      - '-enc'
+      - '-EncodedCommand'
+      - '-e '
+      - '/e '
+  selection_download:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+    CommandLine|contains:
+      - 'DownloadString'
+      - 'DownloadFile'
+      - 'Invoke-WebRequest'
+      - 'wget'
+      - 'curl'
+      - 'Invoke-RestMethod'
+      - 'Net.WebClient'
+      - 'Start-BitsTransfer'
+  selection_bypass:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+    CommandLine|contains:
+      - '-ExecutionPolicy Bypass'
+      - '-ep bypass'
+      - '-exec bypass'
+      - 'Set-ExecutionPolicy'
+      - 'Unblock-File'
+      - 'Add-MpPreference'
+      - 'Set-MpPreference'
+      - 'DisableRealtimeMonitoring'
+  selection_hidden:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+    CommandLine|contains:
+      - '-WindowStyle Hidden'
+      - '-w hidden'
+      - '-w h'
+      - '-NoProfile'
+      - '-NonInteractive'
+      - '-nop'
+      - '-Command'
+      - '-c '
+  selection_suspicious:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+    CommandLine|contains:
+      - 'Invoke-Expression'
+      - 'IEX'
+      - 'Invoke-Command'
+      - 'New-Object System.Net.WebClient'
+      - 'Start-Process'
+      - 'Invoke-WmiMethod'
+      - 'Invoke-CimMethod'
+      - 'Get-WmiObject'
+      - 'Get-CimInstance'
+  condition: selection_encoded or selection_download or selection_bypass or selection_hidden or selection_suspicious
+falsepositives:
+  - Legitimate PowerShell scripts
+  - Software deployment
+  - System administration
+level: high

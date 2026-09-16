@@ -1,0 +1,105 @@
+title: Disable or Modify Security Tools Detection
+id: sigma-006-004
+status: experimental
+description: Detects attempts to disable or modify security tools
+references:
+  - https://attack.mitre.org/techniques/T1562/001/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.defense_evasion
+  - attack.t1562.001
+logsource:
+  category: process_creation
+  product: any
+detection:
+  selection_windows_defender:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+      - '\cmd.exe'
+      - '\sc.exe'
+    CommandLine|contains:
+      - 'Set-MpPreference'
+      - 'Add-MpPreference'
+      - 'Remove-MpPreference'
+      - 'DisableRealtimeMonitoring'
+      - 'DisableIOAVProtection'
+      - 'DisableBehaviorMonitoring'
+      - 'DisableScriptScanning'
+      - 'DisableCatchupFullScan'
+      - 'DisableCatchupQuickScan'
+      - 'DisableBlockAtFirstSeen'
+      - 'ExclusionPath'
+      - 'ExclusionExtension'
+      - 'MpCmdRun.exe -Disable'
+      - 'MpCmdRun.exe -RemoveDefinitions'
+      - 'Windows Defender'
+  selection_windows_firewall:
+    Image|endswith:
+      - '\netsh.exe'
+      - '\powershell.exe'
+      - '\cmd.exe'
+    CommandLine|contains:
+      - 'firewall set opmode'
+      - 'advfirewall set allprofiles state off'
+      - 'advfirewall set allprofiles state false'
+      - 'net stop mpssvc'
+      - 'Set-NetFirewallProfile'
+      - 'Set-NetFirewallRule'
+      - 'Disable-NetFirewallRule'
+      - 'Remove-NetFirewallRule'
+      - 'New-NetFirewallRule -Action Block'
+      - 'urn -Action Block'
+  selection_windows_svc:
+    Image|endswith: '\sc.exe'
+    CommandLine|contains:
+      - 'stop'
+      - 'config'
+      - 'disable'
+      - 'start= disabled'
+    CommandLine|contains|endswith:
+      - 'WinDefend'
+      - 'MsMpSvc'
+      - 'SecurityHealthService'
+      - 'WscSvc'
+      - 'Sense'
+      - 'MpsSvc'
+      - 'BFE'
+  selection_linux_security:
+    Image|endswith:
+      - '/systemctl'
+      - '/service'
+      - '/chkconfig'
+      - '/rc-update'
+    CommandLine|contains:
+      - 'stop auditd'
+      - 'stop iptables'
+      - 'stop fail2ban'
+      - 'stop apparmor'
+      - 'stop seccomp'
+      - 'stop clamonacc'
+      - 'stop ufw'
+      - 'stop firewalld'
+      - 'systemctl stop'
+      - 'rc-service stop'
+      - 'chkconfig off'
+  selection_linux_config:
+    Image|endswith:
+      - '/echo'
+      - '/tee'
+    CommandLine|contains:
+      - '/etc/audit/auditd.conf'
+      - '/etc/audit/rules.d/'
+      - '/etc/fail2ban/'
+      - '/etc/iptables/'
+      - '/etc/ufw/'
+      - '/etc/apparmor.d/'
+      - '/etc/systemd/system/'
+  condition: selection_windows_defender or selection_windows_firewall or selection_windows_svc or selection_linux_security or selection_linux_config
+falsepositives:
+  - Legitimate security tool configuration
+  - System administration
+  - Security team operations
+level: critical

@@ -1,0 +1,52 @@
+title: Registry Run Keys Persistence Detection
+id: sigma-004-003
+status: experimental
+description: Detects modification of registry run keys for persistence
+references:
+  - https://attack.mitre.org/techniques/T1547/001/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.persistence
+  - attack.t1547.001
+logsource:
+  category: registry
+  product: windows
+detection:
+  selection_run_key:
+    TargetObject|contains:
+      - '\Software\Microsoft\Windows\CurrentVersion\Run'
+      - '\Software\Microsoft\Windows\CurrentVersion\RunOnce'
+      - '\Software\Microsoft\Windows\CurrentVersion\RunServices'
+      - '\Software\Microsoft\Windows\CurrentVersion\RunServicesOnce'
+      - '\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders'
+      - '\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders'
+      - '\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders'
+      - '\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders'
+      - '\Software\Microsoft\Windows NT\CurrentVersion\Winlogon'
+      - '\Software\Microsoft\Windows NT\CurrentVersion\Windows'
+      - '\Software\Microsoft\Windows NT\CurrentVersion\Windows'
+      - '\Software\Microsoft\Windows NT\CurrentVersion\Winlogon'
+      - '\Software\Microsoft\Windows NT\CurrentVersion\Winlogon'
+      - '\Software\Microsoft\Windows NT\CurrentVersion\Winlogon'
+  selection_run_value:
+    TargetObject|contains:
+      - '\Shell'
+      - '\Userinit'
+      - '\VMApplet'
+      - '\Persistent'
+  selection_startup_folder:
+    TargetObject|contains:
+      - '\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run'
+      - '\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\StartupFolder'
+  selection_winlogon:
+    EventID: 4657
+    ObjectName|contains:
+      - '\Software\Microsoft\Windows NT\CurrentVersion\Winlogon'
+  condition: selection_run_key or selection_run_value or selection_startup_folder or selection_winlogon
+falsepositives:
+  - Legitimate startup programs
+  - Software installation
+  - User configuration
+level: high

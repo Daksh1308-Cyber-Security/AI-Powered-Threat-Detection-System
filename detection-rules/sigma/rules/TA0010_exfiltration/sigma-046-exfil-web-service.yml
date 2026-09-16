@@ -1,0 +1,55 @@
+title: Exfiltration over Web Service Detection
+id: sigma-011-003
+status: experimental
+description: Detects data exfiltration over web services
+references:
+  - https://attack.mitre.org/techniques/T1567/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.exfiltration
+  - attack.t1567
+logsource:
+  category: network_connection
+  product: any
+detection:
+  selection_cloud_upload:
+    network.protocol: https
+    destination.domain|contains:
+      - 'cloudinary.com'
+      - 'amazonaws.com'
+      - 's3.amazonaws.com'
+      - 'drive.google.com'
+      - 'dropbox.com'
+      - 'box.com'
+      - 'onedrive.com'
+      - 'pastebin.com'
+      - 'gist.github.com'
+      - 'api.github.com'
+  selection_paste_sites:
+    network.protocol: https
+    destination.domain|endswith:
+      - 'pastebin.com'
+      - 'gitlab.com'
+      - 'gist.github.com'
+      - 'repl.it'
+      - 'codesandbox.io'
+      - 'colab.research.google.com'
+  selection_encoded_upload:
+    network.protocol: https
+    http.request_body|length|gte: 100000
+    http.request_body|contains:
+      - 'base64'
+      - 'gzip'
+      - 'zip'
+  selection_mass_upload:
+    network.protocol: https
+    destination.domain|contains: 'upload'
+    http.request_body|length|gte: 1000000
+  condition: selection_cloud_upload or selection_paste_sites or selection_encoded_upload or selection_mass_upload
+falsepositives:
+  - Legitimate cloud backup services
+  - Paste sites for code sharing
+  - Development tools
+level: high

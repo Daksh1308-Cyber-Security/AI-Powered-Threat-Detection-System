@@ -1,0 +1,45 @@
+title: Host Enumeration Detection
+id: sigma-001-002
+status: experimental
+description: Detects gathering of host information through system commands or enumeration activities
+references:
+  - https://attack.mitre.org/techniques/T1592/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.reconnaissance
+  - attack.t1592
+logsource:
+  category: process_creation
+  product: linux
+detection:
+  selection_cmd:
+    Image|endswith:
+      - '/uname'
+      - '/hostname'
+      - '/id'
+      - '/whoami'
+      - '/w'
+      - '/systeminfo'
+  selection_cmd_args:
+    Image|endswith: '/cat'
+    CommandLine|contains:
+      - '/etc/hostname'
+      - '/etc/hosts'
+      - '/etc/passwd'
+      - '/etc/shadow'
+  selection_network:
+    Image|endswith:
+      - '/ifconfig'
+      - '/ip'
+      - '/ipconfig'
+    CommandLine|contains:
+      - 'addr'
+      - 'interface'
+  condition: selection_cmd or selection_cmd_args or selection_network
+falsepositives:
+  - System administration scripts
+  - Monitoring tools
+  - Legitimate system checks
+level: medium

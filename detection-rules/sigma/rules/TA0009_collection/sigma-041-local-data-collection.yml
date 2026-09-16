@@ -1,0 +1,95 @@
+title: Data from Local System Collection Detection
+id: sigma-010-001
+status: experimental
+description: Detects collection of data from local systems
+references:
+  - https://attack.mitre.org/techniques/T1005/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.collection
+  - attack.t1005
+logsource:
+  category: process_creation
+  product: any
+detection:
+  selection_linux_tools:
+    Image|endswith:
+      - '/tar'
+      - '/zip'
+      - '/gzip'
+      - '/7z'
+      - '/rar'
+    CommandLine|contains:
+      - '/etc/'
+      - '/var/'
+      - '/home/'
+      - '/root/'
+      - '/tmp/'
+      - '/opt/'
+      - '/usr/share/'
+      - '/var/www/'
+  selection_linux_find:
+    Image|endswith: '/find'
+    CommandLine|contains:
+      - 'doc'
+      - 'txt'
+      - 'pdf'
+      - 'xls'
+      - 'csv'
+      - 'db'
+      - 'sql'
+      - 'key'
+      - 'secret'
+  selection_windows_copy:
+    Image|endswith:
+      - '\copy.exe'
+      - '\xcopy.exe'
+      - '\robocopy.exe'
+      - '\tar.exe'
+      - '\zip.exe'
+      - '\7z.exe'
+    CommandLine|contains:
+      - 'C:\Users\'
+      - 'C:\Documents'
+      - 'C:\Temp\'
+      - 'AppData'
+      - 'Desktop'
+      - 'Documents'
+      - 'Downloads'
+      - 'NTUSER.DAT'
+      - 'SAM'
+      - 'SYSTEM'
+  selection_windows_doc:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+    CommandLine|contains:
+      - 'Get-ChildItem'
+      - 'Get-Content'
+      - 'Copy-Item'
+      - 'Compress-Archive'
+      - 'Export-Csv'
+      - 'Out-File'
+    CommandLine|contains:
+      - 'Users\'
+      - 'Documents'
+      - 'Desktop'
+  selection_windows_highlight:
+    Image|endswith:
+      - '\esentutl.exe'
+      - '\reg.exe'
+      - '\vssadmin.exe'
+    CommandLine|contains:
+      - '/y'
+      - 'save'
+      - 'HKLM'
+      - 'SAM'
+      - 'SYSTEM'
+  condition: selection_linux_tools or selection_linux_find or selection_windows_copy or selection_windows_doc or selection_windows_highlight
+falsepositives:
+  - Legitimate backups
+  - File archiving
+  - System administration
+level: high

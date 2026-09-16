@@ -1,0 +1,82 @@
+title: Account Creation Detection
+id: sigma-004-004
+status: experimental
+description: Detects creation of new user accounts that may indicate persistence
+references:
+  - https://attack.mitre.org/techniques/T1136/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.persistence
+  - attack.t1136
+logsource:
+  category: process_creation
+  product: any
+detection:
+  selection_linux_useradd:
+    Image|endswith:
+      - '/useradd'
+      - '/adduser'
+      - '/usermod'
+    CommandLine|contains:
+      - '-m'
+      - '-g'
+      - '-s'
+      - '-d'
+      - '-G'
+  selection_linux_passw:
+    Image|endswith:
+      - '/passwd'
+    CommandLine|contains:
+      - '-a'
+      - '--add'
+      - '-d'
+      - '--delete'
+      - '-l'
+      - '--lock'
+      - '-u'
+      - '--unlock'
+  selection_linux_usermod:
+    Image|endswith:
+      - '/usermod'
+    CommandLine|contains:
+      - '-aG'
+      - '-g'
+      - '-G'
+      - '-s'
+      - '-d'
+  selection_windows_net_user:
+    Image|endswith:
+      - '\net.exe'
+      - '\net1.exe'
+    CommandLine|contains:
+      - 'user'
+      - 'localgroup'
+      - 'group'
+  selection_windows_net_localgroup:
+    Image|endswith:
+      - '\net.exe'
+      - '\net1.exe'
+    CommandLine|contains:
+      - 'localgroup'
+      - 'administrators'
+      - 'Remote Desktop Users'
+      - 'Remote Management Users'
+  selection_powershell_user:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+    CommandLine|contains:
+      - 'New-LocalUser'
+      - 'New-ADUser'
+      - 'Add-LocalGroupMember'
+      - 'Add-ADGroupMember'
+  selection_windows_event:
+    EventID: 4720
+  condition: selection_linux_useradd or selection_linux_passw or selection_linux_usermod or selection_windows_net_user or selection_windows_net_localgroup or selection_powershell_user or selection_windows_event
+falsepositives:
+  - Legitimate user creation
+  - System administration
+  - Help desk operations
+level: high

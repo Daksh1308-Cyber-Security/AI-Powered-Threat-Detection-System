@@ -1,0 +1,48 @@
+title: Trusted Relationship Access Detection
+id: sigma-002-005
+status: experimental
+description: Detects access through trusted third-party relationships or supply chain compromise
+references:
+  - https://attack.mitre.org/techniques/T1199/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.initial_access
+  - attack.t1199
+logsource:
+  category: authentication
+  product: any
+detection:
+  selection_vendor_vpn:
+    service: openvpn
+    source.ip|startswith:
+      - '10.0.0.0/8'
+    user.name|endswith:
+      - '_admin'
+      - '_vendor'
+      - '_partner'
+  selection_service_account:
+    user.name|contains:
+      - '_svc'
+      - '_service'
+      - '_system'
+      - 'svc_'
+      - 'service_'
+    user.type: service
+  selection_shared_account:
+    user.name|contains:
+      - 'shared'
+      - 'common'
+      - 'generic'
+      - 'template'
+  filter_business_hours:
+    event.hour:
+      - '>= 8'
+      - '<= 18'
+  condition: (selection_vendor_vpn or selection_service_account or selection_shared_account) and not filter_business_hours
+falsepositives:
+  - After-hours maintenance
+  - Scheduled tasks
+  - Automated processes
+level: high

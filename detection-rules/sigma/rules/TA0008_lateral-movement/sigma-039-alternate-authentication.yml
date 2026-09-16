@@ -1,0 +1,69 @@
+title: Alternate Authentication Material Detection
+id: sigma-009-003
+status: experimental
+description: Detects use of alternate authentication material (pass-the-hash, pass-the-ticket)
+references:
+  - https://attack.mitre.org/techniques/T1550/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.lateral_movement
+  - attack.t1550
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_pass_the_hash:
+    Image|endswith:
+      - '\psexec.exe'
+      - '\mimikatz.exe'
+      - '\sekurlsa.exe'
+      - '\cryptdump.exe'
+    CommandLine|contains:
+      - 'sekurlsa::pth'
+      - 'NTLM'
+      - '-hash'
+      - 'hashes'
+      - 'ntlm'
+      - 'pth'
+  selection_pass_the_ticket:
+    Image|endswith:
+      - '\mimikatz.exe'
+      - '\kekeo.exe'
+      - '\tgtkrb'
+    CommandLine|contains:
+      - 'kerberos::ptt'
+      - 'sekurlsa::tickets'
+      - 'kerberos::golden'
+      - 'kerberos::silver'
+      - 'kerberos::ptc'
+      - 'klist'
+  selection_powershell_ntlm:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+    CommandLine|contains:
+      - 'Kerberos'
+      - 'NTLM'
+      - 'New-Object System.IdentityModel.Tokens'
+      - 'CreateAuthorizationHeader'
+      - 'NSSM'
+  selection_linux_ptt:
+    Image|endswith:
+      - '/python'
+      - '/python3'
+    CommandLine|contains:
+      - 'impacket'
+      - 'wmiexec'
+      - 'smbexec'
+      - 'ntlmrelayx'
+      - 'psexec.py'
+      - 'getTGT'
+      - 'getST'
+  condition: selection_pass_the_hash or selection_pass_the_ticket or selection_powershell_ntlm or selection_linux_ptt
+falsepositives:
+  - Legitimate Kerberos authentication
+  - Security tools
+  - Authentication testing
+level: high

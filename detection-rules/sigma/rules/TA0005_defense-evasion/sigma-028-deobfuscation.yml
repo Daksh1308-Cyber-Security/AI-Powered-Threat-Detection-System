@@ -1,0 +1,71 @@
+title: Deobfuscate/Decode Files or Information Detection
+id: sigma-006-005
+status: experimental
+description: Detects deobfuscation or decoding of files or information
+references:
+  - https://attack.mitre.org/techniques/T1140/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.defense_evasion
+  - attack.t1140
+logsource:
+  category: process_creation
+  product: any
+detection:
+  selection_windows_certutil:
+    Image|endswith: '\certutil.exe'
+    CommandLine|contains:
+      - '-decode'
+      - '-encode'
+      - '-decodehex'
+      - '-encodehex'
+  selection_windows_winrar:
+    Image|endswith:
+      - '\rar.exe'
+      - '\unrar.exe'
+      - '\7z.exe'
+      - '\winrar.exe'
+    CommandLine|contains:
+      - 'x'
+      - 'e'
+      - 'a'
+  selection_windows_powershell:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+    CommandLine|contains:
+      - 'FromBase64String'
+      - '[Convert]::FromBase64String'
+      - 'System.Text.Encoding'
+      - 'GetBytes'
+      - 'GetString'
+      - 'UTF8.GetString'
+      - 'ASCII.GetString'
+      - 'Unicode.GetString'
+      - 'ReadAllBytes'
+      - 'WriteAllBytes'
+      - 'MemoryStream'
+      - 'GzipStream'
+      - 'DeflateStream'
+  selection_linux_decode:
+    Image|endswith:
+      - '/openssl'
+      - '/xxd'
+      - '/od'
+      - '/hexdump'
+    CommandLine|contains:
+      - 'base64'
+      - 'aes'
+      - 'des'
+      - 'enc'
+      - '-d'
+      - '-e'
+      - '-x'
+  condition: selection_windows_certutil or selection_windows_winrar or selection_windows_powershell or selection_linux_decode
+falsepositives:
+  - Legitimate file extraction
+  - Software installation
+  - Development tools
+level: medium

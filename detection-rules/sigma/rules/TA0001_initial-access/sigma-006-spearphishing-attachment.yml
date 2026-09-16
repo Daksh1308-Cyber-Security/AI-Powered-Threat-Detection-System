@@ -1,0 +1,74 @@
+title: Spearphishing Attachment Detection
+id: sigma-002-003
+status: experimental
+description: Detects email attachments with suspicious file types or content
+references:
+  - https://attack.mitre.org/techniques/T1566/001/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.initial_access
+  - attack.t1566.001
+logsource:
+  category: email
+  product: any
+detection:
+  selection_suspicious_ext:
+    attachment.extension:
+      - '.exe'
+      - '.scr'
+      - '.pif'
+      - '.com'
+      - '.bat'
+      - '.cmd'
+      - '.vbs'
+      - '.vbe'
+      - '.js'
+      - '.jse'
+      - '.wsf'
+      - '.wsh'
+      - '.ps1'
+      - '.msi'
+      - '.msp'
+      - '.mst'
+      - '.cpl'
+      - '.lnk'
+      - '.inf'
+      - '.reg'
+      - '.doc'
+      - '.docm'
+      - '.xls'
+      - '.xlsm'
+      - '.ppt'
+      - '.pptm'
+      - '.rtf'
+      - '.pdf'
+  selection_double_ext:
+    attachment.filename|endswith:
+      - '.doc.exe'
+      - '.pdf.exe'
+      - '.jpg.exe'
+      - '.png.exe'
+      - '.txt.exe'
+      - '.doc.scr'
+      - '.pdf.scr'
+      - '.jpg.scr'
+      - '.png.scr'
+  selection_macros:
+    attachment.extension:
+      - '.docm'
+      - '.xlsm'
+      - '.pptm'
+    attachment.contains:
+      - 'AutoOpen'
+      - 'Document_Open'
+      - 'Auto_Open'
+      - 'Workbook_Open'
+      - 'Auto_Close'
+  condition: selection_suspicious_ext or selection_double_ext or selection_macros
+falsepositives:
+  - Legitimate software distribution
+  - Business documents with macros
+  - Software installers
+level: critical

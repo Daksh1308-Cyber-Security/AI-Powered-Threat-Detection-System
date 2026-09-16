@@ -1,0 +1,38 @@
+title: Startup Folder Persistence Detection
+id: sigma-004-006
+status: experimental
+description: Detects modification of startup folder for persistence
+references:
+  - https://attack.mitre.org/techniques/T1547/001/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.persistence
+  - attack.t1547.001
+logsource:
+  category: file_creation
+  product: any
+detection:
+  selection_windows_startup:
+    Target|contains:
+      - '\Microsoft\Windows\Start Menu\Programs\Startup\'
+      - '\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\'
+  selection_linux_autostart:
+    Target|contains:
+      - '/etc/xdg/autostart/'
+      - '~/.config/autostart/'
+  selection_macos_login:
+    Target|contains:
+      - '/Library/LaunchAgents/'
+      - '/Library/LaunchDaemons/'
+      - '~/Library/LaunchAgents/'
+  selection_windows_registry:
+    Target|contains:
+      - '\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\StartupFolder'
+  condition: selection_windows_startup or selection_linux_autostart or selection_macos_login or selection_windows_registry
+falsepositives:
+  - Legitimate startup programs
+  - Software installation
+  - User configuration
+level: medium

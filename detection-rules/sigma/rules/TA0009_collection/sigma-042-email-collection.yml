@@ -1,0 +1,72 @@
+title: Email Collection Detection
+id: sigma-010-002
+status: experimental
+description: Detects collection of email data
+references:
+  - https://attack.mitre.org/techniques/T1114/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.collection
+  - attack.t1114
+logsource:
+  category: process_creation
+  product: any
+detection:
+  selection_windows_outlook:
+    Image|endswith:
+      - '\outlook.exe'
+    CommandLine|contains:
+      - '/diary'
+      - '/embedding'
+      - '/nopreview'
+      - '/safe'
+  selection_powershell_email:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+    CommandLine|contains:
+      - 'Import-PowerShellDataFile'
+      - 'Get-Mailbox'
+      - 'Get-MailUser'
+      - 'Get-PublicFolder'
+      - 'Export-Mailbox'
+      - 'ForEach-Object'
+      - 'Select-MailboxContent'
+      - 'Exchange Online'
+      - 'Get-ItemProperty'
+  selection_linux_mail:
+    Image|endswith:
+      - '/mail'
+      - '/fetchmail'
+      - '/sendmail'
+      - '/procmail'
+      - '/spamassassin'
+      - '/alpine'
+      - '/mutt'
+      - '/mbsync'
+      - '/offlineimap'
+    CommandLine|contains:
+      - '-a'
+      - 'dump'
+      - 'fetch'
+      - 'sync'
+      - 'import'
+      - 'export'
+  selection_cloud:
+    Image|endswith:
+      - '/curl'
+      - 'wget.exe'
+    CommandLine|contains:
+      - 'email'
+      - 'mailbox'
+      - 'inbox'
+      - 'OWA'
+      - 'Exchange'
+  condition: selection_windows_outlook or selection_powershell_email or selection_linux_mail or selection_cloud
+falsepositives:
+  - Legitimate email management
+  - Mail backup tools
+  - Email migration
+level: high

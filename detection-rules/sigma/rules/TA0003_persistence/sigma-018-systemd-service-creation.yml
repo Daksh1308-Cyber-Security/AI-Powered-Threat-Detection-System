@@ -1,0 +1,56 @@
+title: Systemd Service Creation Detection
+id: sigma-004-005
+status: experimental
+description: Detects creation of systemd services that may indicate persistence
+references:
+  - https://attack.mitre.org/techniques/T1543/002/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.persistence
+  - attack.t1543.002
+logsource:
+  category: process_creation
+  product: linux
+detection:
+  selection_systemctl_create:
+    Image|endswith:
+      - '/systemctl'
+    CommandLine|contains:
+      - 'enable'
+      - 'start'
+  selection_systemd_create:
+    Image|endswith:
+      - '/bin/cp'
+      - '/bin/mv'
+      - '/bin/install'
+    Target|contains:
+      - '/etc/systemd/system/'
+      - '/usr/lib/systemd/system/'
+      - '/run/systemd/system/'
+      - '~/.config/systemd/user/'
+  selection_direct_write:
+    Image|endswith:
+      - '/bin/bash'
+      - '/bin/sh'
+      - '/bin/zsh'
+    CommandLine|contains:
+      - 'systemd'
+      - 'service'
+      - 'unit'
+      - 'ExecStart='
+      - 'ExecStop='
+      - 'WantedBy='
+  selection_service_files:
+    Target|contains:
+      - '/etc/systemd/system/'
+      - '/usr/lib/systemd/system/'
+      - '/run/systemd/system/'
+      - '~/.config/systemd/user/'
+  condition: selection_systemctl_create or selection_systemd_create or selection_direct_write or selection_service_files
+falsepositives:
+  - Legitimate service creation
+  - Software installation
+  - System administration
+level: high

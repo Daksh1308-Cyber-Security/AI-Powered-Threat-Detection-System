@@ -1,0 +1,80 @@
+title: Remote System Discovery Detection
+id: sigma-008-003
+status: experimental
+description: Detects discovery of remote systems
+references:
+  - https://attack.mitre.org/techniques/T1018/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.discovery
+  - attack.t1018
+logsource:
+  category: process_creation
+  product: any
+detection:
+  selection_linux:
+    Image|endswith:
+      - '/arp'
+      - '/ip'
+      - '/ifconfig'
+      - '/nmap'
+      - '/nbtscan'
+      - '/nbstat'
+      - '/route'
+      - '/smbclient'
+      - '/nbtscan'
+      - '/host'
+      - '/dig'
+      - '/nslookup'
+      - '/fping'
+      - '/ping'
+    CommandLine|contains:
+      - '-a'
+      - 'neigh'
+      - 'scan'
+      - 'query'
+  selection_windows:
+    Image|endswith:
+      - '\ping.exe'
+      - '\arp.exe'
+      - '\net.exe'
+      - '\netstat.exe'
+      - '\nslookup.exe'
+      - '\tracert.exe'
+      - '\pathping.exe'
+      - '\query.exe'
+    CommandLine|contains:
+      - '-a'
+      - 'session'
+      - 'user'
+      - 'computer'
+      - 'computer name'
+      - 'r AI'
+      - 'run'
+  selection_windows_ad:
+    Image|endswith: '\powershell.exe'
+    CommandLine|contains:
+      - 'Get-ADComputer'
+      - 'Get-ADForest'
+      - 'Get-ADDomain'
+      - 'Get-ADDomainController'
+      - 'Get-ADGroup'
+      - 'Get-ADOrganizationalUnit'
+      - 'Get-ADUser'
+  selection_esx:
+    Image|endswith:
+      - '/esxcli'
+      - '/vim-cmd'
+      - '/vmware-vim-cmd'
+    CommandLine|contains:
+      - 'hostsvc'
+      - 'network'
+      - 'vm'
+  condition: selection_linux or selection_windows or selection_windows_ad or selection_esx
+falsepositives:
+  - Legitimate network troubleshooting
+  - System administration
+  - Monitoring tools
+level: medium

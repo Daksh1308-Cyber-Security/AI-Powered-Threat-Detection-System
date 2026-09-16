@@ -1,0 +1,49 @@
+title: Endpoint Denial of Service Detection
+id: sigma-013-002
+status: experimental
+description: Detects endpoint denial of service attacks
+references:
+  - https://attack.mitre.org/techniques/T1499/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.impact
+  - attack.t1499
+logsource:
+  category: network_connection
+  product: any
+detection:
+  selection_syn_flood:
+    network.transport: tcp
+    tcp.flags: SYN
+    network.packets|gte: 10000
+  selection_resource_exhaustion:
+    event.category: resource
+    event.kind: event
+    event.type: exhaustion
+    process:
+      name: '*'
+      cpu_usage|gte: 95
+      memory_usage|gte: 90
+  selection_slowloris:
+    network.protocol: http
+    destination.port: 80
+    http.request.method: GET
+    http.request.bytes|lte: 100
+    network.connection.state: established
+  selection_process_fork_bomb:
+    event.category: process
+    process:
+      parent.name: '*'
+    event.code: 1
+    process.count|gte: 100
+  selection_windows_dos:
+    winlog.event_id: 1009
+    winlog.provider_name: Microsoft-Windows-WinINet-Capture
+  condition: selection_syn_flood or selection_resource_exhaustion or selection_slowloris or selection_process_fork_bomb or selection_windows_dos
+falsepositives:
+  - High-volume legitimate traffic
+  - Distributed load testing
+  - Network stress testing
+level: high

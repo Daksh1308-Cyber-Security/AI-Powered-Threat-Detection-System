@@ -1,0 +1,76 @@
+title: Masquerading Detection
+id: sigma-006-003
+status: experimental
+description: Detects processes attempting to masquerade as legitimate system processes
+references:
+  - https://attack.mitre.org/techniques/T1036/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.defense_evasion
+  - attack.t1036
+logsource:
+  category: process_creation
+  product: any
+detection:
+  selection_system_names:
+    Image|endswith:
+      - '\svchost.exe'
+      - '\lsass.exe'
+      - '\csrss.exe'
+      - '\wininit.exe'
+      - '\services.exe'
+      - '\smss.exe'
+      - '\explorer.exe'
+      - '\taskmgr.exe'
+      - '\cmd.exe'
+      - '\powershell.exe'
+      - '\System32\svchost.exe'
+      - '\System32\lsass.exe'
+      - '/bin/systemd'
+      - '/usr/lib/systemd/systemd'
+      - '/bin/sh'
+      - '/bin/bash'
+      - '/bin/true'
+    ParentImage|endswith:
+      - '\ProgramData\'
+      - '\Users\'
+      - '\Temp\'
+      - '\tmp\'
+      - '/tmp/'
+      - '/var/tmp/'
+      - '/dev/shm/'
+  selection_suspicious_path:
+    Image|contains:
+      - '\Users\Public\'
+      - '\ProgramData\'
+      - '\Temp\'
+      - '\Windows\Temp\'
+      - '/tmp/'
+      - '/var/tmp/'
+      - '/dev/shm/'
+      - '/home/'
+    Image|endswith:
+      - '.exe'
+      - '.bat'
+      - '.cmd'
+      - '.scr'
+      - '.pif'
+      - '.com'
+  selection_suspicious_name:
+    Image|endswith|contains:
+      - 'svchost.exe'
+      - 'explorer.exe'
+      - 'lsass.exe'
+      - 'winlogon.exe'
+      - 'services.exe'
+    Image|startswith:
+      - '\Windows\'
+      - '\ProgramFiles\'
+  condition: selection_system_names or selection_suspicious_path or selection_suspicious_name
+falsepositives:
+  - Legitimate software running from temp locations
+  - Software updates
+  - Installer programs
+level: high

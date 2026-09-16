@@ -1,0 +1,71 @@
+title: Ingress Tool Transfer Detection
+id: sigma-012-002
+status: experimental
+description: Detects ingress tool transfer for C2 operations
+references:
+  - https://attack.mitre.org/techniques/T1105/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.command_and_control
+  - attack.t1105
+logsource:
+  category: network_connection
+  product: any
+detection:
+  selection_suspicious_download:
+    network.protocol: http
+    http.request.method: GET
+    http.request.body|contains:
+      - '.exe'
+      - '.msi'
+      - '.ps1'
+      - 'powershell'
+      - 'mimikatz'
+      - 'procdump'
+      - 'cobaltstrike'
+      - 'beacon'
+  selection_tool_names:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+      - '\cmd.exe'
+    CommandLine|contains:
+      - 'Invoke-WebRequest'
+      - 'Invoke-RestMethod'
+      - 'Start-BitsTransfer'
+      - 'curl.exe'
+      - 'wget'
+      - 'certutil'
+      - 'bitsadmin'
+  selection_encoded_downloads:
+    network.protocol: https
+    tls.sni:
+      - 'github.com'
+      - 'gist.github.com'
+      - 'raw.githubusercontent.com'
+      - 'cloudflare-ipfs.com'
+      - 'jsdelivr.net'
+      - 'pastebin.com'
+  selection_external_ip:
+    destination.ip|not|contains:
+      - '192.168.'
+      - '10.'
+      - '172.16.'
+  selection_ingress_tool:
+    Image|endswith:
+      - '\notepad.exe'
+      - '\explorer.exe'
+    ParentImage|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+    CommandLine|contains:
+      - 'download'
+      - 'invoke'
+  condition: selection_suspicious_download or selection_tool_names or selection_encoded_downloads or selection_external_ip or selection_ingress_tool
+falsepositives:
+  - Legitimate software downloads
+  - Patch management
+  - Update mechanisms
+level: high

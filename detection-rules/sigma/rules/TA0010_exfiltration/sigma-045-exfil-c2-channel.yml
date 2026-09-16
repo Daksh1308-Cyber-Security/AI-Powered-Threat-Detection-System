@@ -1,0 +1,51 @@
+title: Exfiltration over C2 Channel Detection
+id: sigma-011-002
+status: experimental
+description: Detects data exfiltration over C2 communication channels
+references:
+  - https://attack.mitre.org/techniques/T1041/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.exfiltration
+  - attack.t1041
+logsource:
+  category: network_connection
+  product: any
+detection:
+  selection_c2_markers:
+    network.protocol: http
+    user_agent|contains:
+      - 'curl'
+      - 'wget'
+      - 'powershell'
+      - 'meterpreter'
+      - 'Empire'
+      - 'Cobalt Strike'
+      - 'Pyel'
+  selection_c2_encoded:
+    network.protocol: http
+    http.request_body|contains:
+      - 'base64'
+      - 'eval'
+      - 'exec'
+      - 'curl'
+      - 'wget'
+      - 'powershell'
+  selection_c2_large:
+    network.protocol: http
+    destination.port: 8080
+    network.bytes_out|gte: 100000
+  selection_rdp_c2:
+    network.protocol: rdp
+    network.bytes_out|gte: 1000000
+  selection_ssh_c2:
+    network.protocol: ssh
+    network.bytes_out|gte: 1000000
+  condition: selection_c2_markers or selection_c2_encoded or selection_c2_large or selection_rdp_c2 or selection_ssh_c2
+falsepositives:
+  - Legitimate large file transfers
+  - Web upload services
+  - Remote utilities
+level: high

@@ -1,0 +1,60 @@
+title: Windows Management Instrumentation Execution Detection
+id: sigma-003-005
+status: experimental
+description: Detects WMI execution that may indicate malicious activity
+references:
+  - https://attack.mitre.org/techniques/T1047/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.execution
+  - attack.t1047
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_wmi_process:
+    Image|endswith:
+      - '\wmic.exe'
+    CommandLine|contains:
+      - 'process'
+      - 'call'
+      - 'create'
+      - 'exec'
+  selection_wmi_cmd:
+    Image|endswith:
+      - '\wmic.exe'
+    CommandLine|contains:
+      - '/node:'
+      - '/user:'
+      - '/password:'
+  selection_powershell_wmi:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+    CommandLine|contains:
+      - 'Invoke-WmiMethod'
+      - 'Invoke-CimMethod'
+      - 'Get-WmiObject'
+      - 'Get-CimInstance'
+      - 'Set-WmiInstance'
+      - 'New-CimInstance'
+      - 'Remove-WmiObject'
+      - 'Remove-CimInstance'
+  selection_wmi_event:
+    Image|endswith:
+      - '\wmic.exe'
+    CommandLine|contains:
+      - 'eventfilter'
+      - 'eventconsumer'
+      - '__EventFilter'
+      - '__EventConsumer'
+      - 'CommandLineEventConsumer'
+      - 'ActiveScriptEventConsumer'
+  condition: selection_wmi_process or selection_wmi_cmd or selection_powershell_wmi or selection_wmi_event
+falsepositives:
+  - Legitimate WMI queries
+  - System administration
+  - Monitoring tools
+level: high

@@ -1,0 +1,75 @@
+title: Account Discovery Detection
+id: sigma-008-002
+status: experimental
+description: Detects enumeration of user accounts and groups
+references:
+  - https://attack.mitre.org/techniques/T1087/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.discovery
+  - attack.t1087
+logsource:
+  category: process_creation
+  product: any
+detection:
+  selection_linux_accounts:
+    Image|endswith:
+      - '/id'
+      - '/whoami'
+      - '/getent'
+      - '/groups'
+      - '/last'
+      - '/lastb'
+      - '/w'
+      - '/wheels'
+      - '/users'
+      - '/find'
+    CommandLine|contains:
+      - '/etc/passwd'
+      - '/etc/shadow'
+      - '/etc/group'
+      - 'all'
+      - 'id'
+      - '-a'
+  selection_linux_user_mgmt:
+    Image|endswith:
+      - '/userinfo'
+      - '/dscl'
+      - '/dsmemberutil'
+  selection_windows_net:
+    Image|endswith:
+      - '\net.exe'
+      - '\net1.exe'
+    CommandLine|contains:
+      - 'user'
+      - 'group'
+      - 'localgroup'
+      - 'accounts'
+  selection_windows_wmic:
+    Image|endswith: '\wmic.exe'
+    CommandLine|contains:
+      - 'user'
+      - 'account'
+      - 'group'
+  selection_windows_powershell:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+    CommandLine|contains:
+      - 'Get-LocalUser'
+      - 'Get-ADUser'
+      - 'Get-ADGroup'
+      - 'Get-ADGroupMember'
+      - 'Get-ADComputer'
+      - 'Get-LocalGroup'
+      - 'Get-LocalGroupMember'
+  selection_windows_event:
+    EventID: 4720
+  condition: selection_linux_accounts or selection_linux_user_mgmt or selection_windows_net or selection_windows_wmic or selection_windows_powershell or selection_windows_event
+falsepositives:
+  - Legitimate user management
+  - System administration
+  - Help desk operations
+level: medium

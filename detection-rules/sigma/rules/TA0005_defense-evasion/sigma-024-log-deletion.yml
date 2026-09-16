@@ -1,0 +1,78 @@
+title: Log Deletion Detection
+id: sigma-006-001
+status: experimental
+description: Detects deletion or clearing of log files
+references:
+  - https://attack.mitre.org/techniques/T1070/001/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.defense_evasion
+  - attack.t1070.001
+logsource:
+  category: process_creation
+  product: any
+detection:
+  selection_linux_rm:
+    Image|endswith:
+      - '/rm'
+      - '/unlink'
+    CommandLine|contains:
+      - '/var/log/'
+      - '/var/log/auth.log'
+      - '/var/log/syslog'
+      - '/var/log/messages'
+      - '*.log'
+      - 'auth.log'
+      - 'syslog'
+      - 'messages'
+  selection_linux_truncate:
+    Image|endswith:
+      - '/truncate'
+      - '/cat'
+      - '/dd'
+    CommandLine|contains:
+      - '/var/log/'
+      - '> /dev/null'
+      - '> /dev/null 2>&1'
+      - '.log'
+  selection_linux_shred:
+    Image|endswith:
+      - '/shred'
+      - '/wipe'
+    CommandLine|contains:
+      - '/var/log/'
+      - '*.log'
+  selection_linux_history:
+    Image|endswith:
+      - '/history'
+      - '/sh'
+      - '/bash'
+    CommandLine|contains:
+      - 'history -c'
+      - 'history-c'
+      - 'rm ~/.bash_history'
+      - 'rm .zsh_history'
+      - 'unset HISTFILE'
+  selection_windows_clear:
+    Image|endswith:
+      - '\wevtutil.exe'
+      - '\wmic.exe'
+      - '\powershell.exe'
+      - '\cmd.exe'
+    CommandLine|contains:
+      - 'clear'
+      - 'cl'
+      - 'gl'
+      - 'wevtutil'
+  selection_windows_wmic_delete:
+    Image|endswith: '\wmic.exe'
+    CommandLine|contains:
+      - 'delete'
+  condition: selection_linux_rm or selection_linux_truncate or selection_linux_shred or selection_linux_history or selection_windows_clear or selection_windows_wmic_delete
+falsepositives:
+  - Log rotation tools
+  - Legitimate log management
+  - System administration
+level: critical

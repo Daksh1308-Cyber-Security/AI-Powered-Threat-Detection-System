@@ -1,0 +1,37 @@
+title: External Remote Services Access Detection
+id: sigma-002-002
+status: experimental
+description: Detects authentication attempts to remote services from external IP addresses
+references:
+  - https://attack.mitre.org/techniques/T1133/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.initial_access
+  - attack.t1133
+logsource:
+  category: authentication
+  product: any
+detection:
+  selection_ssh:
+    service: sshd
+    event.outcome: success
+  selection_rdp:
+    winlog.event_id: 4624
+    winlog.event_data.LogonType: 10
+  selection_vpn:
+    service: openvpn
+    event.outcome: success
+  filter_internal:
+    source.ip:
+      - '192.168.0.0/16'
+      - '10.0.0.0/8'
+      - '172.16.0.0/12'
+      - '127.0.0.0/8'
+  condition: (selection_ssh or selection_rdp or selection_vpn) and not filter_internal
+falsepositives:
+  - Legitimate remote access
+  - VPN connections
+  - Remote administration
+level: high

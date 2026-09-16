@@ -1,0 +1,64 @@
+title: System Process Creation Detection
+id: sigma-004-002
+status: experimental
+description: Detects creation or modification of system processes that may indicate persistence
+references:
+  - https://attack.mitre.org/techniques/T1543/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.persistence
+  - attack.t1543
+logsource:
+  category: process_creation
+  product: any
+detection:
+  selection_systemd_create:
+    Image|endswith:
+      - '/systemctl'
+    CommandLine|contains:
+      - 'enable'
+      - 'start'
+      - 'daemon-reload'
+  selection_init_create:
+    Image|endswith:
+      - '/initctl'
+      - '/service'
+    CommandLine|contains:
+      - 'start'
+      - 'stop'
+      - 'restart'
+      - 'reload'
+  selection_launchd_create:
+    Image|endswith:
+      - '/launchctl'
+    CommandLine|contains:
+      - 'load'
+      - 'unload'
+      - 'start'
+      - 'stop'
+  selection_windows_service_create:
+    Image|endswith:
+      - '\sc.exe'
+    CommandLine|contains:
+      - 'create'
+      - 'config'
+  selection_powershell_service:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+    CommandLine|contains:
+      - 'New-Service'
+      - 'Set-Service'
+      - 'Start-Service'
+      - 'Stop-Service'
+      - 'Restart-Service'
+  selection_windows_event:
+    EventID: 7045
+  condition: selection_systemd_create or selection_init_create or selection_launchd_create or selection_windows_service_create or selection_powershell_service or selection_windows_event
+falsepositives:
+  - Legitimate service creation
+  - Software installation
+  - System administration
+level: high

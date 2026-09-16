@@ -1,0 +1,41 @@
+title: Brute Force Detection
+id: sigma-007-001
+status: experimental
+description: Detects brute force attacks against authentication mechanisms
+references:
+  - https://attack.mitre.org/techniques/T1110/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.credential_access
+  - attack.t1110
+logsource:
+  category: authentication
+  product: any
+detection:
+  selection_linux_ssh:
+    service: sshd
+    event.outcome: failure
+  selection_linux_sudo:
+    service: sudo
+    event.outcome: failure
+  selection_linux_su:
+    service: su
+    event.outcome: failure
+  selection_windows_logon:
+    winlog.event_id: 4625
+  selection_pam:
+    service: pam
+    event.outcome: failure
+  condition:
+    -
+      selection_linux_ssh
+  filter_noise:
+    tags|contains: delayed_auth_processing
+  condition: (selection_linux_ssh or selection_linux_sudo or selection_linux_su or selection_windows_logon or selection_pam) | count(src_ip) by src_ip > 10 within 5m
+falsepositives:
+  - Users with forgotten passwords
+  - Misconfigured services
+  - Monitoring tools
+level: critical

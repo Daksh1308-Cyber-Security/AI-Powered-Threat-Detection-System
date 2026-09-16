@@ -1,0 +1,57 @@
+title: SMB Lateral Movement Detection
+id: sigma-009-004
+status: experimental
+description: Detects lateral movement via SMB/Windows admin shares
+references:
+  - https://attack.mitre.org/techniques/T1021/002/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.lateral_movement
+  - attack.t1021.002
+logsource:
+  category: network_connection
+  product: windows
+detection:
+  selection_network:
+    destination.port: 445
+    destination.ip|contains:
+      - '192.168.'
+      - '10.'
+      - '172.16.'
+  selection_smb_share:
+    network.protocol: smb
+    network.transport: tcp
+    destination.port: 445
+  selection_admin_share:
+    network.protocol: smb
+    file.path|contains:
+      - '\\admin$'
+      - '\\c$'
+      - '\\d$'
+      - '\\e$'
+  selection_psexec:
+    Image|endswith:
+      - '\psexec.exe'
+      - 'psexec64.exe'
+      - '\smbexec'
+    CommandLine|contains:
+      - '-accepteula'
+      - '-s'
+      - '-d'
+  selection_net_use:
+    Image|endswith:
+      - '\net.exe'
+      - '\net1.exe'
+    CommandLine|contains:
+      - 'use'
+      - '\\\\'
+      - 'admin$'
+      - 'IPC$'
+  condition: selection_network or selection_smb_share or selection_admin_share or selection_psexec or selection_net_use
+falsepositives:
+  - Legitimate file sharing
+  - Print services
+  - Domain controller replication
+level: high

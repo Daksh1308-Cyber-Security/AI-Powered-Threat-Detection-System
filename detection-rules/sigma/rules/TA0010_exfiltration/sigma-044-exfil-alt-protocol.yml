@@ -1,0 +1,57 @@
+title: Exfiltration over Alternative Protocol Detection
+id: sigma-011-001
+status: experimental
+description: Detects data exfiltration over alternative protocols
+references:
+  - https://attack.mitre.org/techniques/T1048/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.exfiltration
+  - attack.t1048
+logsource:
+  category: network_connection
+  product: any
+detection:
+  selection_dns_large:
+    network.protocol: dns
+    dns.answer|contains:
+      - 'big'
+      - 'data'
+      - 'exfil'
+      - 'base64'
+    dns.question|length|gte: 200
+  selection_dns_tunneling:
+    network.protocol: dns
+    dns.question|contains:
+      - 'dns2.'
+      - 'tunnel.'
+      - 'ddns.'
+      - 'o-o.myaddr'
+      - 'iodine.'
+      - 'dnscat'
+  selection_icmp:
+    network.protocol: icmp
+    network.packets|contains:
+      - 'big'
+      - 'data'
+      - 'ping'
+      - 'size'
+    network.bytes|gte: 1000
+  selection_ftp:
+    destination.port: 21
+    network.protocol: ftp
+    network.bytes_out|gte: 1000000
+  selection_tftp:
+    destination.port: 69
+    network.protocol: tftp
+  selection_p2p:
+    destination.port: 6881
+    network.protocol: bittorrent
+  condition: selection_dns_large or selection_dns_tunneling or selection_icmp or selection_ftp or selection_tftp or selection_p2p
+falsepositives:
+  - Large legitimate file transfers
+  - DNS queries for CDN
+  - P2P software
+level: critical

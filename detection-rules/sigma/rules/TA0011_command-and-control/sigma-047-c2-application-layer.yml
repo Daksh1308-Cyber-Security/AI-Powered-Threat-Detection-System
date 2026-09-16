@@ -1,0 +1,61 @@
+title: Command and Control via Application Layer Protocol Detection
+id: sigma-012-001
+status: experimental
+description: Detects C2 communication via application layer protocols
+references:
+  - https://attack.mitre.org/techniques/T1071/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.command_and_control
+  - attack.t1071
+logsource:
+  category: network_connection
+  product: any
+detection:
+  selection_suspicious_user_agents:
+    user_agent|contains:
+      - 'curl'
+      - 'wget'
+      - 'powershell'
+      - 'python-requests'
+      - 'Go-http-client'
+      - 'Apache-HttpClient'
+  selection_http_beaconing:
+    network.protocol: http
+    http.request.method: GET
+    http.response.status_code: 200
+  selection_https_suspicious:
+    network.protocol: https
+    tls.version: 1.2
+    destination.port:
+      - 443
+      - 8443
+  selection_http_post:
+    network.protocol: http
+    http.request.method: POST
+    http.request.body|length|gte: 10000
+    http.response.status_code: 200
+  selection_dns_suspicious:
+    network.protocol: dns
+    dns.question|contains:
+      - 'no-ip.org'
+      - 'duckdns.org'
+      - 'dynamic-dns.net'
+      - 'dynu.com'
+      - 'freedns.afraid.org'
+      - 'zerodns.org'
+      - 'ddns.net'
+      - 'dyn.com'
+  selection_websocket:
+    network.protocol: ws
+    destination.port|contains:
+      - 80
+      - 443
+  condition: selection_suspicious_user_agents or selection_http_beaconing or selection_https_suspicious or selection_http_post or selection_dns_suspicious or selection_websocket
+falsepositives:
+  - Legitimate API clients
+  - Monitoring tools
+  - Development tools
+level: high

@@ -1,0 +1,59 @@
+title: Spearphishing Link Detection
+id: sigma-002-004
+status: experimental
+description: Detects phishing emails with suspicious URLs or links
+references:
+  - https://attack.mitre.org/techniques/T1566/002/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.initial_access
+  - attack.t1566.002
+logsource:
+  category: email
+  product: any
+detection:
+  selection_url_shorteners:
+    body.url|contains:
+      - 'bit.ly/'
+      - 'tinyurl.com/'
+      - 'goo.gl/'
+      - 't.co/'
+      - 'is.gd/'
+      - 'buff.ly/'
+      - 'ow.ly/'
+      - 'rb.gy/'
+      - 'cutt.ly/'
+  selection_ip_urls:
+    body.url|re: 'https?://\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
+  selection_suspicious_domains:
+    body.url|contains:
+      - 'login-'
+      - 'verify-'
+      - 'secure-'
+      - 'account-'
+      - 'update-'
+      - 'confirm-'
+      - 'banking-'
+      - 'paypal-'
+      - 'apple-'
+      - 'microsoft-'
+      - 'google-'
+      - 'amazon-'
+      - 'netflix-'
+  selection_encoded_urls:
+    body.url|contains:
+      - '%40'
+      - '%23'
+      - '%24'
+      - '%25'
+      - '%26'
+      - '%3D'
+      - '%3F'
+  condition: selection_url_shorteners or selection_ip_urls or selection_suspicious_domains or selection_encoded_urls
+falsepositives:
+  - Legitimate URL shorteners
+  - Marketing emails
+  - Newsletter subscriptions
+level: high

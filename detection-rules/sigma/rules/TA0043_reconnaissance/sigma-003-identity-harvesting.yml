@@ -1,0 +1,50 @@
+title: Identity Harvesting Detection
+id: sigma-001-003
+status: experimental
+description: Detects attempts to gather user identity information through LDAP queries or other enumeration methods
+references:
+  - https://attack.mitre.org/techniques/T1589/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.reconnaissance
+  - attack.t1589
+logsource:
+  category: authentication
+  product: any
+detection:
+  selection:
+    event.category: authentication
+    event.kind: event
+  selection_ldap:
+    service: ldap
+    event.type: query
+  selection_win_enum:
+    winlog.event_id:
+      - 4720
+      - 4722
+      - 4723
+      - 4724
+      - 4725
+      - 4726
+      - 4727
+      - 4728
+      - 4729
+      - 4730
+      - 4731
+      - 4732
+      - 4733
+      - 4734
+      - 4735
+      - 4736
+      - 4737
+      - 4738
+      - 4739
+      - 4740
+  condition: selection or selection_ldap or selection_win_enum
+falsepositives:
+  - Active Directory administration
+  - Legitimate user management
+  - Help desk operations
+level: medium

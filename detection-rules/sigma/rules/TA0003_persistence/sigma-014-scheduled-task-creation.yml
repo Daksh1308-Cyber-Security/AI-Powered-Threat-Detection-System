@@ -1,0 +1,59 @@
+title: Scheduled Task Creation Detection
+id: sigma-004-001
+status: experimental
+description: Detects creation or modification of scheduled tasks that may indicate persistence
+references:
+  - https://attack.mitre.org/techniques/T1053/005/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.persistence
+  - attack.t1053.005
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_schtasks_create:
+    Image|endswith: '\schtasks.exe'
+    CommandLine|contains:
+      - '/create'
+      - '/Create'
+  selection_schtasks_modify:
+    Image|endswith: '\schtasks.exe'
+    CommandLine|contains:
+      - '/change'
+      - '/Change'
+  selection_tasklist:
+    Image|endswith: '\tasklist.exe'
+    CommandLine|contains:
+      - '/v'
+      - '/fo'
+  selection_at:
+    Image|endswith:
+      - '\at.exe'
+      - '\at1.exe'
+    CommandLine|contains:
+      - '/add'
+      - '/delete'
+  selection_powershell_scheduled:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+    CommandLine|contains:
+      - 'Register-ScheduledTask'
+      - 'Set-ScheduledTask'
+      - 'New-ScheduledTaskTrigger'
+      - 'New-ScheduledTaskAction'
+      - 'New-ScheduledTaskSettingsSet'
+      - 'Enable-ScheduledTask'
+      - 'Disable-ScheduledTask'
+      - 'Unregister-ScheduledTask'
+  selection_windows_event:
+    EventID: 4698
+  condition: selection_schtasks_create or selection_schtasks_modify or selection_tasklist or selection_at or selection_powershell_scheduled or selection_windows_event
+falsepositives:
+  - Legitimate scheduled tasks
+  - Software updates
+  - System maintenance
+level: high

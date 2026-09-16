@@ -1,0 +1,69 @@
+title: Suspicious Bash Execution Detection
+id: sigma-003-003
+status: experimental
+description: Detects suspicious bash execution patterns that may indicate malicious activity
+references:
+  - https://attack.mitre.org/techniques/T1059/004/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.execution
+  - attack.t1059.004
+logsource:
+  category: process_creation
+  product: linux
+detection:
+  selection_reverse_shell:
+    Image|endswith:
+      - '/bash'
+      - '/sh'
+      - '/zsh'
+    CommandLine|contains:
+      - '/dev/tcp/'
+      - '/dev/udp/'
+      - 'nc -e'
+      - 'ncat -e'
+      - 'ncat -c'
+      - 'socat'
+  selection_download:
+    Image|endswith:
+      - '/bash'
+      - '/sh'
+      - '/zsh'
+    CommandLine|contains:
+      - 'wget'
+      - 'curl'
+      - 'lynx'
+      - 'elinks'
+  selection_exec:
+    Image|endswith:
+      - '/bash'
+      - '/sh'
+      - '/zsh'
+    CommandLine|contains:
+      - 'eval '
+      - 'exec '
+      - 'system('
+      - 'passthru('
+      - 'popen('
+      - 'proc_open('
+      - 'shell_exec('
+  selection_suspicious:
+    Image|endswith:
+      - '/bash'
+      - '/sh'
+      - '/zsh'
+    CommandLine|contains:
+      - 'chmod +x'
+      - 'chown root'
+      - 'nohup'
+      - 'screen -S'
+      - 'tmux new'
+      - 'screen -d -r'
+  condition: selection_reverse_shell or selection_download or selection_exec or selection_suspicious
+falsepositives:
+  - Legitimate shell scripts
+  - Software development
+  - System administration
+level: high

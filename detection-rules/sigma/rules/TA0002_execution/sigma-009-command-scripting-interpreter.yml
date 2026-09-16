@@ -1,0 +1,73 @@
+title: Suspicious Command and Scripting Interpreter Execution
+id: sigma-003-001
+status: experimental
+description: Detects execution of commands through scripting interpreters that may indicate malicious activity
+references:
+  - https://attack.mitre.org/techniques/T1059/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.execution
+  - attack.t1059
+logsource:
+  category: process_creation
+  product: any
+detection:
+  selection_bash:
+    Image|endswith:
+      - '/bash'
+      - '/sh'
+      - '/zsh'
+    CommandLine|contains:
+      - 'eval'
+      - 'exec'
+      - 'system('
+      - 'passthru('
+      - 'popen('
+      - 'proc_open('
+      - 'shell_exec('
+  selection_python:
+    Image|endswith:
+      - '/python'
+      - '/python3'
+      - '/python2'
+    CommandLine|contains:
+      - 'exec('
+      - 'eval('
+      - 'compile('
+      - 'import os'
+      - 'import subprocess'
+      - 'import sys'
+      - 'import socket'
+  selection_perl:
+    Image|endswith: '/perl'
+    CommandLine|contains:
+      - 'exec('
+      - 'system('
+      - 'qx//'
+      - 'open('
+  selection_ruby:
+    Image|endswith: '/ruby'
+    CommandLine|contains:
+      - 'exec('
+      - 'system('
+      - 'system('
+      - 'popen('
+  selection_php:
+    Image|endswith: '/php'
+    CommandLine|contains:
+      - 'exec('
+      - 'system('
+      - 'passthru('
+      - 'shell_exec('
+      - 'popen('
+      - 'proc_open('
+      - 'eval('
+      - 'assert('
+  condition: selection_bash or selection_python or selection_perl or selection_ruby or selection_php
+falsepositives:
+  - Legitimate script execution
+  - Software development
+  - System administration
+level: high

@@ -1,0 +1,62 @@
+title: Sudo Abuse Detection
+id: sigma-005-004
+status: experimental
+description: Detects suspicious sudo usage patterns
+references:
+  - https://attack.mitre.org/techniques/T1548/003/
+author: Threat Detection System
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.privilege_escalation
+  - attack.t1548.003
+logsource:
+  category: process_creation
+  product: linux
+detection:
+  selection_sudo_shell:
+    Image|endswith: '/sudo'
+    CommandLine|contains:
+      - '/bin/bash'
+      - '/bin/sh'
+      - '/bin/zsh'
+      - '-i'
+      - 'bash'
+      - 'sh'
+  selection_sudo_system:
+    Image|endswith: '/sudo'
+    CommandLine|contains:
+      - 'su'
+      - 'useradd'
+      - 'usermod'
+      - 'passwd'
+      - 'chmod'
+      - 'chown'
+      - 'visudo'
+      - 'adduser'
+  selection_sudo_edit:
+    Image|endswith: '/sudo'
+    CommandLine|contains:
+      - 'visudo'
+      - 'passwd'
+      - '/etc/sudoers'
+      - '/etc/shadow'
+      - '/etc/passwd'
+  selection_sudo_nopasswd:
+    Image|endswith: '/sudo'
+    CommandLine|contains:
+      - '-n'
+      - '--non-interactive'
+  selection_sudo_user:
+    Image|endswith: '/sudo'
+    CommandLine|contains:
+      - '-u'
+      - '-g'
+      - '-G'
+      - '-S'
+  condition: selection_sudo_shell or selection_sudo_system or selection_sudo_edit or selection_sudo_nopasswd or selection_sudo_user
+falsepositives:
+  - Legitimate sudo usage
+  - System administration
+  - Package installation
+level: high
