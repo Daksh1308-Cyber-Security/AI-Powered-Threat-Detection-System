@@ -1,0 +1,355 @@
+{
+  "index_templates": [
+    {
+      "name": "linux-logs",
+      "index_patterns": ["linux-*"],
+      "template": {
+        "settings": {
+          "number_of_shards": 1,
+          "number_of_replicas": 0,
+          "index.lifecycle.name": "linux-lifecycle",
+          "index.lifecycle.rollover_alias": "linux"
+        },
+        "mappings": {
+          "properties": {
+            "@timestamp": { "type": "date" },
+            "message": { "type": "text" },
+            "agent": {
+              "properties": {
+                "type": { "type": "keyword" },
+                "hostname": { "type": "keyword" },
+                "ip": { "type": "ip" }
+              }
+            },
+            "event": {
+              "properties": {
+                "category": { "type": "keyword" },
+                "kind": { "type": "keyword" },
+                "type": { "type": "keyword" },
+                "outcome": { "type": "keyword" }
+              }
+            },
+            "source": {
+              "properties": {
+                "ip": { "type": "ip" },
+                "port": { "type": "integer" },
+                "geo": {
+                  "properties": {
+                    "city_name": { "type": "keyword" },
+                    "country_name": { "type": "keyword" },
+                    "location": { "type": "geo_point" }
+                  }
+                }
+              }
+            },
+            "destination": {
+              "properties": {
+                "ip": { "type": "ip" },
+                "port": { "type": "integer" }
+              }
+            },
+            "user": {
+              "properties": {
+                "name": { "type": "keyword" },
+                "domain": { "type": "keyword" },
+                "id": { "type": "keyword" }
+              }
+            },
+            "process": {
+              "properties": {
+                "name": { "type": "keyword" },
+                "pid": { "type": "long" },
+                "parent": {
+                  "properties": {
+                    "name": { "type": "keyword" },
+                    "pid": { "type": "long" }
+                  }
+                },
+                "command_line": { "type": "text" }
+              }
+            },
+            "tags": { "type": "keyword" },
+            "labels": { "type": "object", "dynamic": true },
+            "mitre": {
+              "properties": {
+                "tactic": { "type": "keyword" },
+                "technique": { "type": "keyword" },
+                "technique_id": { "type": "keyword" }
+              }
+            },
+            "detection": {
+              "properties": {
+                "rule_id": { "type": "keyword" },
+                "rule_name": { "type": "keyword" },
+                "severity": { "type": "keyword" },
+                "confidence": { "type": "float" }
+              }
+            },
+            "label": { "type": "keyword" }
+          }
+        }
+      },
+      "priority": 100
+    },
+    {
+      "name": "windows-logs",
+      "index_patterns": ["windows-*"],
+      "template": {
+        "settings": {
+          "number_of_shards": 1,
+          "number_of_replicas": 0,
+          "index.lifecycle.name": "windows-lifecycle",
+          "index.lifecycle.rollover_alias": "windows"
+        },
+        "mappings": {
+          "properties": {
+            "@timestamp": { "type": "date" },
+            "message": { "type": "text" },
+            "agent": {
+              "properties": {
+                "type": { "type": "keyword" },
+                "hostname": { "type": "keyword" },
+                "ip": { "type": "ip" }
+              }
+            },
+            "winlog": {
+              "properties": {
+                "channel": { "type": "keyword" },
+                "computer_name": { "type": "keyword" },
+                "event_id": { "type": "long" },
+                "record_id": { "type": "long" },
+                "provider_name": { "type": "keyword" },
+                "level": { "type": "keyword" },
+                "message": { "type": "text" },
+                "keywords": { "type": "keyword" },
+                "process": {
+                  "properties": {
+                    "pid": { "type": "long" },
+                    "name": { "type": "keyword" },
+                    "executable": { "type": "keyword" }
+                  }
+                },
+                "thread": {
+                  "properties": {
+                    "pid": { "type": "long" }
+                  }
+                }
+              }
+            },
+            "event": {
+              "properties": {
+                "code": { "type": "long" },
+                "provider": { "type": "keyword" },
+                "created": { "type": "date" },
+                "kind": { "type": "keyword" },
+                "category": { "type": "keyword" },
+                "type": { "type": "keyword" },
+                "outcome": { "type": "keyword" },
+                "module": { "type": "keyword" },
+                "action": { "type": "keyword" },
+                "outcome": { "type": "keyword" }
+              }
+            },
+            "host": {
+              "properties": {
+                "name": { "type": "keyword" },
+                "ip": { "type": "ip" },
+                "os": {
+                  "properties": {
+                    "name": { "type": "keyword" },
+                    "version": { "type": "keyword" },
+                    "type": { "type": "keyword" }
+                  }
+                }
+              }
+            },
+            "source": {
+              "properties": {
+                "ip": { "type": "ip" },
+                "port": { "type": "integer" }
+              }
+            },
+            "destination": {
+              "properties": {
+                "ip": { "type": "ip" },
+                "port": { "type": "integer" }
+              }
+            },
+            "user": {
+              "properties": {
+                "name": { "type": "keyword" },
+                "domain": { "type": "keyword" },
+                "id": { "type": "keyword" },
+                "type": { "type": "keyword" }
+              }
+            },
+            "process": {
+              "properties": {
+                "name": { "type": "keyword" },
+                "pid": { "type": "long" },
+                "executable": { "type": "keyword" },
+                "command_line": { "type": "text" },
+                "parent": {
+                  "properties": {
+                    "name": { "type": "keyword" },
+                    "pid": { "type": "long" },
+                    "executable": { "type": "keyword" }
+                  }
+                }
+              }
+            },
+            "tags": { "type": "keyword" },
+            "labels": { "type": "object", "dynamic": true },
+            "mitre": {
+              "properties": {
+                "tactic": { "type": "keyword" },
+                "technique": { "type": "keyword" },
+                "technique_id": { "type": "keyword" }
+              }
+            },
+            "detection": {
+              "properties": {
+                "rule_id": { "type": "keyword" },
+                "rule_name": { "type": "keyword" },
+                "severity": { "type": "keyword" },
+                "confidence": { "type": "float" }
+              }
+            },
+            "label": { "type": "keyword" }
+          }
+        }
+      },
+      "priority": 100
+    },
+    {
+      "name": "network-logs",
+      "index_patterns": ["network-*"],
+      "template": {
+        "settings": {
+          "number_of_shards": 1,
+          "number_of_replicas": 0,
+          "index.lifecycle.name": "network-lifecycle",
+          "index.lifecycle.rollover_alias": "network"
+        },
+        "mappings": {
+          "properties": {
+            "@timestamp": { "type": "date" },
+            "message": { "type": "text" },
+            "source": {
+              "properties": {
+                "ip": { "type": "ip" },
+                "port": { "type": "integer" },
+                "bytes": { "type": "long" }
+              }
+            },
+            "destination": {
+              "properties": {
+                "ip": { "type": "ip" },
+                "port": { "type": "integer" },
+                "bytes": { "type": "long" }
+              }
+            },
+            "network": {
+              "properties": {
+                "transport": { "type": "keyword" },
+                "protocol": { "type": "keyword" },
+                "bytes": { "type": "long" },
+                "packets": { "type": "long" }
+              }
+            },
+            "event": {
+              "properties": {
+                "category": { "type": "keyword" },
+                "kind": { "type": "keyword" },
+                "type": { "type": "keyword" },
+                "outcome": { "type": "keyword" }
+              }
+            },
+            "tags": { "type": "keyword" },
+            "labels": { "type": "object", "dynamic": true },
+            "mitre": {
+              "properties": {
+                "tactic": { "type": "keyword" },
+                "technique": { "type": "keyword" },
+                "technique_id": { "type": "keyword" }
+              }
+            },
+            "detection": {
+              "properties": {
+                "rule_id": { "type": "keyword" },
+                "rule_name": { "type": "keyword" },
+                "severity": { "type": "keyword" },
+                "confidence": { "type": "float" }
+              }
+            },
+            "label": { "type": "keyword" }
+          }
+        }
+      },
+      "priority": 100
+    },
+    {
+      "name": "detection-alerts",
+      "index_patterns": ["detection-alerts-*"],
+      "template": {
+        "settings": {
+          "number_of_shards": 1,
+          "number_of_replicas": 0,
+          "index.lifecycle.name": "alerts-lifecycle",
+          "index.lifecycle.rollover_alias": "detection-alerts"
+        },
+        "mappings": {
+          "properties": {
+            "@timestamp": { "type": "date" },
+            "alert_id": { "type": "keyword" },
+            "rule_id": { "type": "keyword" },
+            "rule_name": { "type": "keyword" },
+            "severity": { "type": "keyword" },
+            "confidence": { "type": "float" },
+            "score": { "type": "integer" },
+            "mitre": {
+              "properties": {
+                "tactic": { "type": "keyword" },
+                "technique": { "type": "keyword" },
+                "technique_id": { "type": "keyword" }
+              }
+            },
+            "source": {
+              "properties": {
+                "ip": { "type": "ip" },
+                "hostname": { "type": "keyword" }
+              }
+            },
+            "destination": {
+              "properties": {
+                "ip": { "type": "ip" },
+                "hostname": { "type": "keyword" }
+              }
+            },
+            "user": {
+              "properties": {
+                "name": { "type": "keyword" },
+                "domain": { "type": "keyword" }
+              }
+            },
+            "process": {
+              "properties": {
+                "name": { "type": "keyword" },
+                "pid": { "type": "long" },
+                "command_line": { "type": "text" }
+              }
+            },
+            "tags": { "type": "keyword" },
+            "labels": { "type": "object", "dynamic": true },
+            "status": { "type": "keyword" },
+            "investigated_by": { "type": "keyword" },
+            "investigated_at": { "type": "date" },
+            "resolution": { "type": "keyword" },
+            "notes": { "type": "text" }
+          }
+        }
+      },
+      "priority": 100
+    }
+  ]
+}

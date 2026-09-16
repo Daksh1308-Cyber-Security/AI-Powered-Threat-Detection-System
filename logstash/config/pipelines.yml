@@ -1,0 +1,18 @@
+# ===========================================
+# Logstash Multi-Pipeline Configuration
+# AI-Powered Threat Detection System
+# ===========================================
+# Each data source gets its own pipeline with a dedicated Beats port.
+# Filebeat/Winlogbeat agents point at the port matching their dataset.
+
+- pipeline.id: linux-syslog
+  path.config: "/usr/share/logstash/pipeline/linux-syslog.conf"
+
+- pipeline.id: windows-eventlogs
+  path.config: "/usr/share/logstash/pipeline/windows-eventlogs.conf"
+
+- pipeline.id: authentication
+  path.config: "/usr/share/logstash/pipeline/authentication.conf"
+
+- pipeline.id: network-logs
+  path.config: "/usr/share/logstash/pipeline/network-logs.conf"

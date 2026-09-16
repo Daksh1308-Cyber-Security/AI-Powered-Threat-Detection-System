@@ -1,0 +1,170 @@
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELK_VERSION}
+    container_name: threat-detection-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+      - "ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE} -Xmx${ES_HEAP_SIZE}"
+      - cluster.name=threat-detection-cluster
+      - node.name=threat-detection-node
+      - bootstrap.memory_lock=true
+      - path.data=/usr/share/elasticsearch/data
+      - path.logs=/usr/share/elasticsearch/logs
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+      - elasticsearch-logs:/usr/share/elasticsearch/logs
+      - ./elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+      - ./elasticsearch/custom-index-templates.json:/usr/share/elasticsearch/config/custom-index-templates.json:ro
+    ports:
+      - "${ES_PORT:-9200}:9200"
+      - "${ES_TRANSPORT_PORT:-9300}:9300"
+    networks:
+      - threat-detection-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -q '\"status\":\"green\\|yellow\"'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:${ELK_VERSION}
+    container_name: threat-detection-logstash
+    environment:
+      - "LS_JAVA_OPTS=-Xms${LS_HEAP_SIZE} -Xmx${LS_HEAP_SIZE}"
+      - xpack.monitoring.enabled=false
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+      - ./logstash/config/pipelines.yml:/usr/share/logstash/config/pipelines.yml:ro
+      - logstash-logs:/usr/share/logstash/logs
+    ports:
+      - "${LOGSTASH_BEATS_PORT:-5044}:5044"
+      - "${LOGSTASH_BEATS_PORT_WINDOWS:-5045}:5045"
+      - "${LOGSTASH_BEATS_PORT_AUTH:-5046}:5046"
+      - "${LOGSTASH_BEATS_PORT_NETWORK:-5047}:5047"
+      - "${LOGSTASH_MONITORING_PORT:-9600}:9600"
+      - "${LOGSTASH_SYSLG_PORT:-5514}:5514/tcp"
+      - "${LOGSTASH_SYSLG_PORT:-5514}:5514/udp"
+      - "${LOGSTASH_SURICATA_PORT:-5515}:5515/tcp"
+    networks:
+      - threat-detection-network
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9600/_node/stats | grep -q '\"jvm\"'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${ELK_VERSION}
+    container_name: threat-detection-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - xpack.security.enabled=false
+      - xpack.security.encryptionKey=${KIBANA_ENCRYPTION_KEY}
+      - xpack.reporting.encryptionKey=${KIBANA_REPORTING_KEY}
+      - server.name=threat-detection-kibana
+      - server.host=0.0.0.0
+      - server.publicBaseUrl=http://localhost:${KIBANA_PORT:-5601}
+    volumes:
+      - kibana-data:/usr/share/kibana/data
+      - kibana-logs:/usr/share/kibana/logs
+      - ./kibana/saved-objects.ndjson:/usr/share/kibana/saved-objects.ndjson:ro
+    ports:
+      - "${KIBANA_PORT:-5601}:5601"
+    networks:
+      - threat-detection-network
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:5601/api/status | grep -q '\"overall\"'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    restart: unless-stopped
+
+  ml-training:
+    build:
+      context: ./ml-model
+      dockerfile: Dockerfile
+    container_name: threat-detection-ml-training
+    environment:
+      - ELASTICSEARCH_HOST=elasticsearch
+      - ELASTICSEARCH_PORT=9200
+      - MODEL_OUTPUT_PATH=/app/models
+    volumes:
+      - ./ml-model:/app
+      - ./lab/datasets:/data
+      - ml-models:/app/models
+    networks:
+      - threat-detection-network
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    profiles:
+      - training
+
+  alert-triage:
+    build:
+      context: ./automation
+      dockerfile: Dockerfile
+    container_name: threat-detection-alert-triage
+    environment:
+      - ELASTICSEARCH_HOST=elasticsearch
+      - ELASTICSEARCH_PORT=9200
+      - ML_MODEL_PATH=/app/models/xgboost_model.pkl
+      - SIGMA_RULES_PATH=/app/detection-rules/sigma/rules
+      - YARA_RULES_PATH=/app/detection-rules/yara
+      - TRIAGE_PORT=${TRIAGE_PORT:-8080}
+    volumes:
+      - ./automation:/app
+      - ./detection-rules:/app/detection-rules:ro
+      - ml-models:/app/models:ro
+    ports:
+      - "${TRIAGE_PORT:-8080}:8080"
+    networks:
+      - threat-detection-network
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    profiles:
+      - automation
+
+volumes:
+  elasticsearch-data:
+    driver: local
+  elasticsearch-logs:
+    driver: local
+  logstash-logs:
+    driver: local
+  kibana-data:
+    driver: local
+  kibana-logs:
+    driver: local
+  ml-models:
+    driver: local
+
+networks:
+  threat-detection-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+          gateway: 172.28.0.1
