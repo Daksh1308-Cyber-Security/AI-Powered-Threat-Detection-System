@@ -34,7 +34,7 @@ $HOST_ONLY_NETWORK = "vboxnet0"
 
 $KALI_NAME = "Kali-Attacker"
 $KALI_IP = "192.168.56.10"
-$KALI_ISO = "C:\ISOs\kali-linux-2024.4-installer-amd64.iso"
+$KALI_VDI = "C:\Users\DAX\Desktop\projects\TOP3 CYBER PROJECT\AI-Powered Threat Detection System\lab\VMs\Kali-Attacker\Kali-Attacker.vdi"
 
 $UBUNTU_NAME = "Ubuntu-Target"
 $UBUNTU_IP = "192.168.56.20"
@@ -139,6 +139,41 @@ function Create-VM {
     Write-Host "[+] VM created: $Name" -ForegroundColor Green
 }
 
+function Import-ExistingVM {
+    param(
+        [string]$Name,
+        [string]$VboxPath,
+        [string]$VdiPath,
+        [int]$Cpu,
+        [int]$Ram
+    )
+
+    Write-Host "[*] Importing existing VM disk: $Name from $VdiPath" -ForegroundColor Yellow
+
+    $VMPath = "$LAB_DIR\$Name"
+    New-Item -ItemType Directory -Path $VMPath -Force | Out-Null
+
+    # Remove existing lab VM if present
+    if (vboxmanage list vms | Select-String "`"$Name`"") {
+        Write-Host "[*] Removing existing VM: $Name" -ForegroundColor Yellow
+        vboxmanage unregistervm $Name --delete 2>$null | Out-Null
+    }
+
+    # Copy VDI into lab directory
+    if (-not (Test-Path "$VMPath\$Name.vdi")) {
+        Copy-Item $VdiPath "$VMPath\$Name.vdi" -Force
+    }
+
+    # Create fresh VM and attach existing disk
+    vboxmanage createvm --name $Name --basefolder $LAB_DIR --ostype Debian_64 --register
+    vboxmanage modifyvm $Name --cpus=$Cpu --memory=$Ram --vram=128 --ioapic=on --audio=none
+    vboxmanage modifyvm $Name --nic1=hostonly --hostonlyadapter1=$HOST_ONLY_NETWORK
+    vboxmanage storagectl $Name --name "SATA" --add sata --controller IntelAhci
+    vboxmanage storageattach $Name --storagectl "SATA" --port 0 --device 0 --type hdd --medium "$VMPath\$Name.vdi"
+
+    Write-Host "[+] Imported VM: $Name" -ForegroundColor Green
+}
+
 function Configure-Network {
     param(
         [string]$Name,
@@ -154,8 +189,16 @@ function Main {
     # Check VirtualBox
     if (-not (Test-VirtualBox)) { exit 1 }
     
-    # Check ISO images before creating anything
-    if (-not (Test-IsoFiles @($KALI_ISO, $UBUNTU_ISO, $WINDOWS_ISO))) { exit 1 }
+    # Check Kali VM disk before creating anything
+    if (-not (Test-Path $KALI_VDI)) {
+        Write-Host "[-] Missing Kali VM disk at $KALI_VDI" -ForegroundColor Red
+        exit 1
+    }
+
+    $ubuntuReady = Test-Path $UBUNTU_ISO
+    $windowsReady = Test-Path $WINDOWS_ISO
+    if (-not $ubuntuReady) { Write-Host "[!] Ubuntu ISO missing ($UBUNTU_ISO) - skipping Ubuntu VM" -ForegroundColor Yellow }
+    if (-not $windowsReady) { Write-Host "[!] Windows ISO missing ($WINDOWS_ISO) - skipping Windows VM" -ForegroundColor Yellow }
     
     # Create lab directory
     New-Item -ItemType Directory -Path $LAB_DIR -Force | Out-Null
@@ -171,14 +214,18 @@ function Main {
     Write-Host ""
     Write-Host "[*] Creating lab VMs..." -ForegroundColor Yellow
     
-    Create-VM -Name $KALI_NAME -Cpu 2 -Ram 4096 -Disk 50000 -Iso $KALI_ISO
+    Import-ExistingVM -Name $KALI_NAME -VboxPath $null -VdiPath $KALI_VDI -Cpu 2 -Ram 4096
     Configure-Network -Name $KALI_NAME -IpAddress $KALI_IP
     
-    Create-VM -Name $UBUNTU_NAME -Cpu 4 -Ram 8192 -Disk 100000 -Iso $UBUNTU_ISO
-    Configure-Network -Name $UBUNTU_NAME -IpAddress $UBUNTU_IP
+    if ($ubuntuReady) {
+        Create-VM -Name $UBUNTU_NAME -Cpu 4 -Ram 8192 -Disk 100000 -Iso $UBUNTU_ISO
+        Configure-Network -Name $UBUNTU_NAME -IpAddress $UBUNTU_IP
+    }
     
-    Create-VM -Name $WINDOWS_NAME -Cpu 4 -Ram 8192 -Disk 80000 -Iso $WINDOWS_ISO
-    Configure-Network -Name $WINDOWS_NAME -IpAddress $WINDOWS_IP
+    if ($windowsReady) {
+        Create-VM -Name $WINDOWS_NAME -Cpu 4 -Ram 8192 -Disk 80000 -Iso $WINDOWS_ISO
+        Configure-Network -Name $WINDOWS_NAME -IpAddress $WINDOWS_IP
+    }
     
     Write-Host ""
     Write-Host "========================================================" -ForegroundColor Cyan

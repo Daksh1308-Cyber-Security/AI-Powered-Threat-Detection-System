@@ -1,0 +1,23 @@
+{
+  "dataset": "unsw",
+  "split": "official",
+  "rows_trained": 96822,
+  "rows_tested": 49971,
+  "attacks_in_train": 47928,
+  "accuracy": 0.8283204258469913,
+  "precision": 0.6958436774245215,
+  "recall": 0.9464626109689015,
+  "f1": 0.8020306911272643,
+  "auc_roc": 0.9622271510624705,
+  "confusion_matrix": [
+    [
+      24014,
+      7596
+    ],
+    [
+      983,
+      17378
+    ]
+  ],
+  "scale_pos_weight": 1.020155232849274
+}

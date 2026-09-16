@@ -157,11 +157,26 @@ python validate-rules.py
 
 ### 6. Train ML model
 
+The model is trained on **real cybersecurity benchmark datasets** (not synthetic logs), using the split protocols each dataset is published with — so the metrics are reproducible and defensible in interviews.
+
 ```bash
-cd ml-model
-pip install -r requirements.txt
-python src/train.py --data ../lab/datasets/labeled_logs.csv
+# UNSW-NB15  — official protocol: train on the training set file, evaluate on the held-out test set file
+python ml-model/src/train_real.py --source unsw --data lab/datasets/kaggle \
+    --model-dir ml-model/models/unsw_nb15 --split official
+
+# CICIDS-2017 — temporal protocol: train on Tue/Wed/Thu flows, evaluate on an UNSEEN day (Friday: portscan/ddos/botnet)
+python ml-model/src/train_real.py --source cicids --data lab/datasets/kaggle/cicids2017 \
+    --model-dir ml-model/models/cicids2017 --split temporal --test-days friday
 ```
+
+Results (XGBoost, reported in `ml-model/models/<dataset>/training_metrics.json`):
+
+| Dataset | Split | Test rows | F1 | AUC-ROC | Honest caveat |
+|---|---|---|---|---|---|
+| UNSW-NB15 | official file split | ~50K | 0.80 | 0.96 | recall 0.95, precision 0.70 — FP trade-off is real |
+| CICIDS-2017 | temporal (unseen day) | ~400K | 0.996 | ~1.0 | portscan/ddos are easy signatures; **botnet recall ≈ 0** (stealthy C2 missed) |
+
+Datasets are licensed CC BY-NC-SA / academic-use — fine for a portfolio with citation.
 
 ### 7. Launch SOC Dashboard
 

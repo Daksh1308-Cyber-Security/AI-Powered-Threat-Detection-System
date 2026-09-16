@@ -14,6 +14,11 @@ VMs/
 *.pcap
 *.log
 
+# Raw datasets (re-downloadable; keep trained models + trainer in repo)
+lab/datasets/kaggle/*.csv
+lab/datasets/kaggle/*.zip
+lab/datasets/kaggle/*.parquet
+
 # OS
 .DS_Store
 Thumbs.db

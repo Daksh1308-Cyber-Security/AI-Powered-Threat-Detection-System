@@ -1,0 +1,29 @@
+{
+  "dataset": "cicids",
+  "split": "temporal",
+  "rows_trained": 855256,
+  "rows_tested": 400000,
+  "attacks_in_train": 255256,
+  "accuracy": 0.995725,
+  "precision": 0.9999243646631706,
+  "recall": 0.991525,
+  "f1": 0.9957069692709379,
+  "auc_roc": 0.99996078275,
+  "confusion_matrix": [
+    [
+      199985,
+      15
+    ],
+    [
+      1695,
+      198305
+    ]
+  ],
+  "scale_pos_weight": 2.350581377127276,
+  "per_class_friday_sample": {
+    "portscan_recall@0.5": 0.993,
+    "ddos_recall@0.5": 0.999,
+    "botnet_recall@0.5": 0.0,
+    "benign_fpr@0.5": 0.0002
+  }
+}
