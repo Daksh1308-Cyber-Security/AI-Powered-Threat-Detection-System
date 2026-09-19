@@ -1,0 +1,65 @@
+{
+  "started_at": "2026-09-19T04:03:01.272547",
+  "target": "192.168.56.20",
+  "duration": "2m",
+  "intensity": "medium",
+  "attacks": [
+    {
+      "name": "port_scan",
+      "success": true,
+      "mitre_technique": "T1046",
+      "mitre_tactic": "discovery",
+      "timestamp": "2026-09-19T04:03:02.944456"
+    },
+    {
+      "name": "ssh_brute_force",
+      "success": false,
+      "mitre_technique": "T1110",
+      "mitre_tactic": "credential_access",
+      "timestamp": "2026-09-19T04:03:08.263894"
+    },
+    {
+      "name": "sql_injection",
+      "success": true,
+      "mitre_technique": "T1190",
+      "mitre_tactic": "initial_access",
+      "timestamp": "2026-09-19T04:03:27.348045"
+    },
+    {
+      "name": "reverse_shell",
+      "success": false,
+      "mitre_technique": "T1059",
+      "mitre_tactic": "execution",
+      "timestamp": "2026-09-19T04:03:35.431587"
+    },
+    {
+      "name": "privilege_escalation",
+      "success": false,
+      "mitre_technique": "T1548",
+      "mitre_tactic": "privilege_escalation",
+      "timestamp": "2026-09-19T04:03:40.446766"
+    },
+    {
+      "name": "lateral_movement",
+      "success": false,
+      "mitre_technique": "T1021",
+      "mitre_tactic": "lateral_movement",
+      "timestamp": "2026-09-19T04:03:45.495621"
+    },
+    {
+      "name": "data_exfiltration",
+      "success": false,
+      "mitre_technique": "T1048",
+      "mitre_tactic": "exfiltration",
+      "timestamp": "2026-09-19T04:03:53.815175"
+    },
+    {
+      "name": "command_and_control",
+      "success": true,
+      "mitre_technique": "T1071",
+      "mitre_tactic": "command_and_control",
+      "timestamp": "2026-09-19T04:04:58.982817"
+    }
+  ],
+  "completed_at": "2026-09-19T04:05:03.983973"
+}
