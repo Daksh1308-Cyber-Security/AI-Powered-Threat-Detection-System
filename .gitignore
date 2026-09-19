@@ -3,8 +3,11 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 *.egg-info/
+.venv/
+venv/
+env/
 
-# Secrets
+# Secrets — never commit these
 .env
 
 # Lab artifacts (VM disks, captures)
@@ -14,11 +17,18 @@ VMs/
 *.pcap
 *.log
 
-# Raw datasets (re-downloadable; keep trained models + trainer in repo)
-lab/datasets/kaggle/*.csv
-lab/datasets/kaggle/*.zip
-lab/datasets/kaggle/*.parquet
+# Downloaded benchmark datasets (CICIDS-2017, UNSW-NB15) — large, re-downloadable,
+# and licensed for academic use only. Fetch them locally per the README instead
+# of committing them to the repo.
+lab/datasets/kaggle/
 
-# OS
+# Large/partial download fragments
+*.zip.partial
+*.kaggle-partial
+*.kaggle
+
+# OS / editor junk
 .DS_Store
 Thumbs.db
+.idea/
+.vscode/
