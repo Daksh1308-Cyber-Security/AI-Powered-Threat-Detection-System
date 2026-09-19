@@ -34,7 +34,7 @@ $HOST_ONLY_NETWORK = "vboxnet0"
 
 $KALI_NAME = "Kali-Attacker"
 $KALI_IP = "192.168.56.10"
-$KALI_VDI = "C:\Users\DAX\Desktop\projects\TOP3 CYBER PROJECT\AI-Powered Threat Detection System\lab\VMs\Kali-Attacker\Kali-Attacker.vdi"
+$KALI_VDI = "C:\ISOs\kali-linux-2026.2-virtualbox-amd64\kali-linux-2026.2-virtualbox-amd64.vdi"
 
 $UBUNTU_NAME = "Ubuntu-Target"
 $UBUNTU_IP = "192.168.56.20"
