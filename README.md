@@ -540,6 +540,17 @@ AI-Powered-Threat-Detection-System/
 ![Attack Simulation Timeline](docs/screenshots/attack_simulation_timeline.png)
 *Attack classes per day — real CICIDS-2017 drive-by/bruteforce/DDoS traffic*
 
+### Live Attack Simulation (real lab run)
+
+> The chart below comes from an **actual run of the attack simulator inside the lab Kali VM**
+> (`python lab/scripts/generate-attack-traffic.py --duration 2m --intensity medium`),
+> with the raw results saved to `lab/logs/attack_simulation_*.json`. Failures shown are real:
+> tools that could not reach the (not-yet-provisioned) target at `192.168.56.20` or are not
+> installed in the Kali image.
+
+![Live Attack Simulation](docs/screenshots/attack_simulation_results.png)
+*Attack simulator run from the lab Kali (2026-09-19) — Nmap scan, sqlmap, and C2 beacon loop executed; brute-force/lateral-movement tools blocked by missing wordlist/tooling/target as documented*
+
 ### Lab Screenshots (added after lab setup)
 
 - [ ] Kibana SOC Dashboard

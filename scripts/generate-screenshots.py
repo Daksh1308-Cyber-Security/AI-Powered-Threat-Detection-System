@@ -145,9 +145,44 @@ def generate_attack_timeline():
     plt.close()
 
 
+def generate_attack_simulation_results():
+    """Real live-lab attack simulation run (latest lab/logs/attack_simulation_*.json)."""
+    import json
+    log_dir = ROOT / 'lab' / 'logs'
+    runs = sorted(log_dir.glob('attack_simulation_*.json'))
+    if not runs:
+        print('No attack simulation logs found; skipping.')
+        return
+    with open(runs[-1]) as f:
+        run = json.load(f)
+
+    attacks = run['attacks']
+    y = [f"{a['name']}\n({a['mitre_technique']})" for a in attacks][::-1]
+    ok = [1.0 if a['success'] else 0.0 for a in attacks][::-1]
+    colors = ['#4caf50' if v == 1.0 else '#e53935' for v in ok]
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.barh(y, ok, color=colors, alpha=0.9, edgecolor='black', linewidth=0.5)
+    ax.set_xlim(0, 1.15)
+    ax.set_xlabel('Exit status (1 = attack ran, 0 = blocked/failed)')
+    ax.set_title(
+        f"Live Attack Simulation — {runs[-1].stem.replace('attack_simulation_', '')}\n"
+        f"Target {run.get('target')} · {run.get('intensity', '?')} intensity · {run.get('duration', '?')} · "
+        f"{sum(1 for a in attacks if a['success'])}/{len(attacks)} attacks succeeded"
+    )
+    for i, (v, clr) in enumerate(zip(ok, colors)):
+        ax.text(v + 0.01, i, 'ran' if v else 'failed', va='center', color=clr, fontsize=9)
+    ax.grid(axis='x', alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(OUT / 'attack_simulation_results.png', dpi=150)
+    plt.close()
+    print(f"Attack simulation chart from {runs[-1].name}")
+
+
 if __name__ == '__main__':
     generate_mitre_heatmap()
     generate_alert_volume_trend()
     generate_roc_curve()
     generate_attack_timeline()
+    generate_attack_simulation_results()
     print(f"Wrote screenshots to {OUT}")
